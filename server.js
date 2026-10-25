@@ -46,6 +46,8 @@ app.use((req, res, next) => {
   res.locals.success_msg = req.flash('success');
   res.locals.error_msg = req.flash('error');
   res.locals.user = req.session ? req.session.user : null;
+  res.locals.venueName = 'Court Manager';
+  res.locals.venue = null;
   next();
 });
 

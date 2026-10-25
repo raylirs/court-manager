@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= typeof title !== 'undefined' ? title + ' | ' : '' %><%= venueName || 'Court Manager' %></title>
+  <title><%= typeof title !== 'undefined' ? title + ' | ' : '' %><%= (typeof venueName !== 'undefined' && venueName) ? venueName : (typeof venue !== 'undefined' && venue ? venue.name : 'Court Manager') %></title>
   <meta name="description" content="Reserve courts, check real-time availability, and secure booking with instant GCash payment.">
 
   <!-- Tailwind CSS CDN -->
@@ -49,7 +49,7 @@
           <i data-lucide="trophy" class="w-5 h-5"></i>
         </div>
         <div>
-          <span class="font-extrabold text-base tracking-tight block leading-tight text-slate-900"><%= venueName || 'Court Manager' %></span>
+          <span class="font-extrabold text-base tracking-tight block leading-tight text-slate-900"><%= (typeof venueName !== 'undefined' && venueName) ? venueName : (typeof venue !== 'undefined' && venue ? venue.name : 'Court Manager') %></span>
           <span class="text-[11px] font-medium text-slate-500 uppercase tracking-wider block">Court Booking & Facilities</span>
         </div>
       </a>
@@ -105,7 +105,7 @@
         <div class="w-6 h-6 rounded-md bg-brand-800 text-white flex items-center justify-center text-xs font-bold">
           <i data-lucide="trophy" class="w-3.5 h-3.5"></i>
         </div>
-        <span>&copy; <%= new Date().getFullYear() %> <%= venueName || 'Court Manager' %>. Powered by Court Manager Pro.</span>
+        <span>&copy; <%= new Date().getFullYear() %> <%= (typeof venueName !== 'undefined' && venueName) ? venueName : (typeof venue !== 'undefined' && venue ? venue.name : 'Court Manager') %>. Powered by Court Manager Pro.</span>
       </div>
       <div class="flex items-center gap-4 text-slate-500">
         <a href="/" class="hover:text-slate-800 transition">Bookings</a>
