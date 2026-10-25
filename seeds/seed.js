@@ -141,6 +141,34 @@ async function seed() {
     console.log('✓ Venue 2 (Metro Smash) courts seeded.');
   }
 
+  // 4. Create Venue Admin for The Playground
+  const hashPlayground = await bcrypt.hash('Playground2026!', 10);
+  await User.findOrCreate({
+    where: { email: 'manager@theplayground.com' },
+    defaults: {
+      name: 'Playground Facility Manager',
+      email: 'manager@theplayground.com',
+      password_hash: hashPlayground,
+      role: 'venue_admin',
+      venue_id: venue1.id,
+      is_active: true
+    }
+  });
+
+  // 5. Create Venue Admin for Metro Smash
+  const hashMetro = await bcrypt.hash('MetroSmash2026!', 10);
+  await User.findOrCreate({
+    where: { email: 'manager@metrosmash.com' },
+    defaults: {
+      name: 'Metro Smash Club Admin',
+      email: 'manager@metrosmash.com',
+      password_hash: hashMetro,
+      role: 'venue_admin',
+      venue_id: venue2.id,
+      is_active: true
+    }
+  });
+
   console.log('--- Multi-Tenant Seed Finished Successfully! ---');
 }
 
