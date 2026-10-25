@@ -1,0 +1,78 @@
+<div class="max-w-4xl mx-auto space-y-6 animate-fade-in">
+
+  <div class="pb-4 border-b border-slate-200">
+    <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">GCash Payment & QR Code Hub</h2>
+    <p class="text-xs text-slate-500">Upload your official GCash QR Code, configure merchant account details, and manage customer payout settings.</p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+    <!-- Form Column (7 cols) -->
+    <div class="lg:col-span-7 glass-card p-6 sm:p-8 space-y-5">
+      <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2 pb-2 border-b border-slate-100">
+        <i data-lucide="qr-code" class="w-4 h-4 text-brand-700"></i>
+        <span>Merchant Account Credentials</span>
+      </h3>
+
+      <form action="/admin/gcash" method="POST" enctype="multipart/form-data" class="space-y-4">
+        <div>
+          <label class="form-label">Upload New GCash QR Code (JPG, PNG, WebP)</label>
+          <input type="file" name="qr_image" accept="image/*" class="form-input text-xs py-1.5">
+          <p class="text-[10px] text-slate-400 mt-1">Exported from your GCash App under "Receive Money / Generate QR".</p>
+        </div>
+
+        <div>
+          <label class="form-label">Merchant GCash Account Name <span class="text-rose-500">*</span></label>
+          <input type="text" name="GCASH_ACCOUNT_NAME" required value="<%= settings.GCASH_ACCOUNT_NAME || '' %>" placeholder="e.g. JUAN DE LA CRUZ / THE PLAYGROUND" class="form-input">
+          <p class="text-[10px] text-slate-400 mt-1">Displayed below the QR code so customers verify recipient accuracy.</p>
+        </div>
+
+        <div>
+          <label class="form-label">GCash Mobile Contact / Number</label>
+          <input type="text" name="GCASH_ACCOUNT_NUMBER" value="<%= settings.GCASH_ACCOUNT_NUMBER || '' %>" placeholder="e.g. 0917-xxx-xxxx" class="form-input font-mono-code">
+          <p class="text-[10px] text-slate-400 mt-1">Fallback mobile number for customers transferring manually.</p>
+        </div>
+
+        <div class="pt-3">
+          <button type="submit" class="btn-primary-green w-full py-2.5 text-xs font-bold shadow-sm">
+            <i data-lucide="save" class="w-4 h-4"></i>
+            <span>Save Payment Settings</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Live Preview Column (5 cols) -->
+    <div class="lg:col-span-5 glass-card p-6 text-center space-y-4">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100 text-left">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Live Customer Preview</h3>
+        <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Live Checkout</span>
+      </div>
+
+      <div class="p-4 bg-slate-50 rounded-xl border border-slate-200/90 inline-block w-full">
+        <% if (settings.GCASH_QR_IMAGE) { %>
+          <img src="<%= settings.GCASH_QR_IMAGE %>" alt="Active QR Code" class="w-48 h-48 object-contain mx-auto rounded-lg shadow-2xs border border-slate-200 mb-2">
+        <% } else { %>
+          <div class="w-48 h-48 bg-white border border-dashed border-slate-300 rounded-lg mx-auto flex flex-col items-center justify-center text-slate-400 mb-2">
+            <i data-lucide="image" class="w-10 h-10 mb-1 text-slate-300"></i>
+            <span class="text-[11px] font-semibold">No QR Uploaded</span>
+          </div>
+        <% } %>
+
+        <div class="space-y-0.5 text-xs mt-3">
+          <span class="text-[10px] text-slate-400 block uppercase tracking-wider font-semibold">Merchant Account</span>
+          <span class="font-extrabold text-slate-900 block"><%= settings.GCASH_ACCOUNT_NAME || 'Not Configured' %></span>
+          <% if (settings.GCASH_ACCOUNT_NUMBER) { %>
+            <span class="font-mono-code text-slate-600 font-semibold block text-[11px]"><%= settings.GCASH_ACCOUNT_NUMBER %></span>
+          <% } %>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-slate-400 leading-relaxed">
+        This is the exact QR code and merchant details displayed to players on the checkout page.
+      </p>
+    </div>
+
+  </div>
+
+</div>

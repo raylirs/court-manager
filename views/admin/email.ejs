@@ -1,0 +1,97 @@
+<div class="max-w-4xl mx-auto space-y-6 animate-fade-in">
+
+  <div class="pb-4 border-b border-slate-200">
+    <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">Email & SMTP Notification Hub</h2>
+    <p class="text-xs text-slate-500">Configure email delivery for automated player booking receipts, reservation status updates, and manager alerts.</p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+    <!-- Settings Form (7 cols) -->
+    <div class="lg:col-span-7 glass-card p-6 sm:p-8 space-y-5">
+      <form action="/admin/email" method="POST" class="space-y-4">
+
+        <div class="flex items-center justify-between p-3 bg-brand-50 rounded-xl border border-brand-100">
+          <div>
+            <span class="text-xs font-bold text-brand-900 block">Automated Email Notifications</span>
+            <span class="text-[11px] text-brand-700 block">Send booking receipts to customers upon reservation</span>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" name="EMAIL_NOTIFICATIONS_ENABLED" value="true" <%= settings.EMAIL_NOTIFICATIONS_ENABLED !== 'false' ? 'checked' : '' %> class="sr-only peer">
+            <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-800"></div>
+          </label>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="sm:col-span-2">
+            <label class="form-label">SMTP Host</label>
+            <input type="text" name="SMTP_HOST" value="<%= settings.SMTP_HOST || 'smtp.gmail.com' %>" placeholder="smtp.gmail.com" class="form-input text-xs font-mono-code">
+          </div>
+          <div>
+            <label class="form-label">SMTP Port</label>
+            <input type="number" name="SMTP_PORT" value="<%= settings.SMTP_PORT || '465' %>" placeholder="465" class="form-input text-xs font-mono-code">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">SMTP Username / Email</label>
+            <input type="email" name="SMTP_USER" value="<%= settings.SMTP_USER || '' %>" placeholder="facility@gmail.com" class="form-input text-xs">
+          </div>
+          <div>
+            <label class="form-label">SMTP Password / App Password</label>
+            <input type="password" name="SMTP_PASS" value="<%= settings.SMTP_PASS || '' %>" placeholder="••••••••••••••••" class="form-input text-xs font-mono-code">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">Sender Display Name</label>
+            <input type="text" name="SMTP_FROM_NAME" value="<%= settings.SMTP_FROM_NAME || '' %>" placeholder="e.g. The Playground Pickleball" class="form-input text-xs">
+          </div>
+          <div>
+            <label class="form-label">Admin Alert Recipient Email</label>
+            <input type="email" name="ADMIN_ALERT_EMAIL" value="<%= settings.ADMIN_ALERT_EMAIL || '' %>" placeholder="manager@gmail.com" class="form-input text-xs">
+          </div>
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" class="btn-primary-green w-full py-2.5 text-xs font-bold shadow-sm">
+            <i data-lucide="save" class="w-4 h-4"></i>
+            <span>Save Email & SMTP Settings</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Live Test Email Column (5 cols) -->
+    <div class="lg:col-span-5 glass-card p-6 space-y-4">
+      <div class="pb-2 border-b border-slate-100">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Live Delivery Test</h3>
+        <p class="text-[11px] text-slate-500 mt-0.5">Send a test email to verify SMTP handshake and inbox delivery.</p>
+      </div>
+
+      <form action="/admin/email/test" method="POST" class="space-y-3">
+        <div>
+          <label class="form-label">Send Test Email To:</label>
+          <input type="email" name="test_email" required placeholder="your.personal@email.com" value="<%= settings.ADMIN_ALERT_EMAIL || settings.SMTP_USER || '' %>" class="form-input text-xs">
+        </div>
+
+        <button type="submit" class="btn-secondary-white w-full py-2.5 text-xs font-bold">
+          <i data-lucide="mail-check" class="w-4 h-4 text-brand-700"></i>
+          <span>Send Verification Email</span>
+        </button>
+      </form>
+
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-600 space-y-1.5">
+        <span class="font-bold text-slate-800 block flex items-center gap-1">
+          <i data-lucide="info" class="w-3.5 h-3.5 text-brand-700"></i>
+          Gmail Setup Note:
+        </span>
+        <p>If using Gmail, generate a 16-character <strong>App Password</strong> under your Google Account Security settings (2FA must be enabled) rather than your personal account password.</p>
+      </div>
+    </div>
+
+  </div>
+
+</div>

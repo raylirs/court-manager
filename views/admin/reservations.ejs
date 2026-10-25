@@ -1,0 +1,151 @@
+<div class="space-y-6 animate-fade-in">
+
+  <!-- Header & Filters -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+    <div>
+      <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">Customer Reservations</h2>
+      <p class="text-xs text-slate-500">Review submitted bookings, verify GCash reference numbers, and confirm court schedules.</p>
+    </div>
+
+    <!-- Quick Stats Summary -->
+    <div class="flex items-center gap-2">
+      <span class="badge-pending text-xs"><%= pendingCount %> Pending Verification</span>
+      <span class="badge-confirmed text-xs"><%= confirmedCount %> Confirmed</span>
+    </div>
+  </div>
+
+  <!-- Search & Filter Bar -->
+  <div class="glass-card p-4">
+    <form action="/admin/reservations" method="GET" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+      <div class="sm:col-span-5">
+        <label class="form-label text-[11px]">Search by Name, Reference Code or Email</label>
+        <div class="relative">
+          <input type="text" name="q" value="<%= query || '' %>" placeholder="e.g. CM-..., Maria, or 0917..." class="form-input text-xs" style="padding-left: 2rem;">
+          <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2"></i>
+        </div>
+      </div>
+
+      <div class="sm:col-span-3">
+        <label class="form-label text-[11px]">Filter by Status</label>
+        <select name="status" class="form-select text-xs">
+          <option value="" <%= !statusFilter ? 'selected' : '' %>>All Statuses</option>
+          <option value="pending_payment" <%= statusFilter === 'pending_payment' ? 'selected' : '' %>>Pending Payment / Verification</option>
+          <option value="confirmed" <%= statusFilter === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
+          <option value="cancelled" <%= statusFilter === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+          <option value="completed" <%= statusFilter === 'completed' ? 'selected' : '' %>>Completed</option>
+        </select>
+      </div>
+
+      <div class="sm:col-span-2">
+        <label class="form-label text-[11px]">Date</label>
+        <input type="date" name="date" value="<%= dateFilter || '' %>" class="form-input text-xs py-1">
+      </div>
+
+      <div class="sm:col-span-2 flex gap-2">
+        <button type="submit" class="btn-primary-green w-full py-2 text-xs font-bold">Filter</button>
+        <a href="/admin/reservations" class="btn-secondary-white py-2 px-3 text-xs" title="Reset Filters"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Reservations Table -->
+  <div class="glass-card overflow-hidden">
+    <% if (reservations.length === 0) { %>
+      <div class="p-12 text-center text-slate-400">
+        <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-2 text-slate-300"></i>
+        <p class="text-sm font-semibold text-slate-600">No reservations match your criteria.</p>
+        <p class="text-xs text-slate-400 mt-1">Try clearing filters or search parameters.</p>
+      </div>
+    <% } else { %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] border-b border-slate-200">
+              <th class="py-3 px-4">Ref Code</th>
+              <th class="py-3 px-4">Player Details</th>
+              <th class="py-3 px-4">Court & Schedule</th>
+              <th class="py-3 px-4">Amount & GCash Ref</th>
+              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 font-medium">
+            <% reservations.forEach(res => { %>
+              <tr class="hover:bg-slate-50/70 transition">
+                <!-- Ref Code -->
+                <td class="py-3.5 px-4">
+                  <span class="font-mono-code font-extrabold text-brand-800 text-xs block"><%= res.reference_code %></span>
+                  <span class="text-[10px] text-slate-400 block"><%= new Date(res.created_at).toLocaleDateString() %></span>
+                </td>
+
+                <!-- Player -->
+                <td class="py-3.5 px-4">
+                  <span class="font-bold text-slate-900 block"><%= res.player_name %></span>
+                  <span class="text-[11px] text-slate-500 block font-mono-code"><%= res.player_phone %></span>
+                  <span class="text-[11px] text-slate-400 block truncate max-w-[160px]"><%= res.player_email %></span>
+                </td>
+
+                <!-- Court & Schedule -->
+                <td class="py-3.5 px-4">
+                  <span class="font-bold text-slate-800 block"><%= res.court ? res.court.name : 'Court #' + res.court_id %></span>
+                  <span class="text-slate-600 text-[11px] block"><%= formatDateDisplay(res.booking_date) %></span>
+                  <span class="text-[11px] text-brand-700 font-mono-code font-semibold block"><%= formatTime12(res.start_time) %> - <%= formatTime12(res.end_time) %></span>
+                </td>
+
+                <!-- Amount & GCash Ref -->
+                <td class="py-3.5 px-4">
+                  <span class="font-extrabold text-slate-900 text-xs block"><%= formatCurrency(res.total_price) %></span>
+                  <span class="text-[11px] font-mono-code text-slate-600 font-semibold block">Ref: <%= res.gcash_reference_no || 'None' %></span>
+                  <% if (res.payment_proof_image) { %>
+                    <a href="<%= res.payment_proof_image %>" target="_blank" class="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline mt-0.5 font-semibold">
+                      <i data-lucide="image" class="w-3 h-3"></i>
+                      View Receipt
+                    </a>
+                  <% } %>
+                </td>
+
+                <!-- Status Badge -->
+                <td class="py-3.5 px-4">
+                  <% if (res.payment_status === 'confirmed') { %>
+                    <span class="badge-confirmed text-[11px]"><i data-lucide="check-circle" class="w-3 h-3"></i> Confirmed</span>
+                  <% } else if (res.payment_status === 'pending_payment') { %>
+                    <span class="badge-pending text-[11px]"><i data-lucide="clock" class="w-3 h-3"></i> Pending</span>
+                  <% } else if (res.payment_status === 'cancelled') { %>
+                    <span class="badge-cancelled text-[11px]"><i data-lucide="x-circle" class="w-3 h-3"></i> Cancelled</span>
+                  <% } else { %>
+                    <span class="badge-confirmed text-[11px]"><%= res.payment_status %></span>
+                  <% } %>
+                </td>
+
+                <!-- Actions -->
+                <td class="py-3.5 px-4 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <% if (res.payment_status !== 'confirmed') { %>
+                      <form action="/admin/reservations/<%= res.id %>/status" method="POST">
+                        <input type="hidden" name="status" value="confirmed">
+                        <button type="submit" class="btn-primary-green text-[11px] py-1 px-2.5 shadow-2xs" title="Verify Payment & Confirm Booking">
+                          <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                          <span>Confirm</span>
+                        </button>
+                      </form>
+                    <% } %>
+
+                    <% if (res.payment_status !== 'cancelled') { %>
+                      <form action="/admin/reservations/<%= res.id %>/status" method="POST" onsubmit="return confirm('Cancel this reservation?');">
+                        <input type="hidden" name="status" value="cancelled">
+                        <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 rounded hover:bg-slate-100 transition" title="Cancel Booking">
+                          <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                      </form>
+                    <% } %>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+
+</div>

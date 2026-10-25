@@ -1,0 +1,75 @@
+<div class="max-w-2xl mx-auto space-y-6 animate-fade-in">
+
+  <div class="flex items-center justify-between pb-4 border-b border-slate-200">
+    <div>
+      <a href="/admin/courts" class="text-xs font-semibold text-brand-800 hover:text-brand-900 inline-flex items-center gap-1 mb-1">
+        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+        <span>Back to Courts</span>
+      </a>
+      <h2 class="text-xl font-extrabold text-slate-900 tracking-tight"><%= isEdit ? 'Edit Court: ' + court.name : 'Add New Court' %></h2>
+      <p class="text-xs text-slate-500">Provide the court name, surface specifications, pricing, and picture.</p>
+    </div>
+  </div>
+
+  <div class="glass-card p-6 sm:p-8">
+    <form action="<%= isEdit ? '/admin/courts/' + court.id + '/update' : '/admin/courts' %>" method="POST" enctype="multipart/form-data" class="space-y-5">
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="sm:col-span-2">
+          <label class="form-label">Court Display Name <span class="text-rose-500">*</span></label>
+          <input type="text" name="name" required placeholder="e.g. Court 1 - Indoor Vinyl" value="<%= isEdit ? court.name : '' %>" class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Court Number</label>
+          <input type="number" name="court_number" min="1" placeholder="1" value="<%= isEdit ? court.court_number : '1' %>" class="form-input font-mono-code">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="form-label">Surface Type / Specs</label>
+          <input type="text" name="surface_type" placeholder="e.g. Indoor Acrylic / Hardcourt" value="<%= isEdit ? court.surface_type : 'Indoor Acrylic' %>" class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Price Per Hour (PHP) <span class="text-rose-500">*</span></label>
+          <div class="relative">
+            <input type="number" step="0.01" min="0" name="price_per_hour" required placeholder="500.00" value="<%= isEdit ? court.price_per_hour : '500.00' %>" class="form-input font-mono-code" style="padding-left: 2rem;">
+            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-xs">₱</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label class="form-label">Court Photo (JPG, PNG, WebP)</label>
+        <input type="file" name="image" accept="image/*" class="form-input text-xs py-1.5">
+        <% if (isEdit && court.image_url) { %>
+          <div class="mt-2 flex items-center gap-3 p-2 bg-slate-50 rounded-lg border border-slate-200">
+            <img src="<%= court.image_url %>" alt="Current image" class="w-16 h-12 object-cover rounded border border-slate-200">
+            <span class="text-xs text-slate-500">Current photo: <%= court.image_url %></span>
+          </div>
+        <% } %>
+      </div>
+
+      <div>
+        <label class="form-label">Court Description & Features</label>
+        <textarea name="description" rows="3" placeholder="e.g., LED lighting, climate-controlled indoor pickleball court with tournament net." class="form-input"><%= isEdit ? court.description : '' %></textarea>
+      </div>
+
+      <div class="pt-2">
+        <label class="inline-flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" name="is_active" value="true" <%= (!isEdit || court.is_active) ? 'checked' : '' %> class="w-4 h-4 rounded text-brand-800 focus:ring-brand-800">
+          <span class="text-xs font-semibold text-slate-700">Make this court available for customer reservations</span>
+        </label>
+      </div>
+
+      <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+        <a href="/admin/courts" class="btn-secondary-white py-2 px-4 text-xs">Cancel</a>
+        <button type="submit" class="btn-primary-green py-2 px-5 text-xs font-bold shadow-sm">
+          <i data-lucide="check" class="w-4 h-4"></i>
+          <span><%= isEdit ? 'Save Court Changes' : 'Create Court' %></span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+</div>

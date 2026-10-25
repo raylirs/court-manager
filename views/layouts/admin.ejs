@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title + ' | ' : '' %>Admin Portal | <%= venueName || 'Court Manager' %></title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f7f2',
+              100: '#dcecdb',
+              200: '#b7d8bd',
+              500: '#349348',
+              600: '#287938',
+              700: '#1e5c2b',
+              800: '#166534',
+              900: '#0f3d1e'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-50 min-h-screen flex text-slate-800 antialiased font-sans">
+
+  <!-- Desktop Sidebar -->
+  <aside class="w-64 bg-white border-r border-slate-200/90 flex flex-col shrink-0 min-h-screen sticky top-0 h-screen overflow-y-auto">
+    <!-- Brand Header -->
+    <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+      <a href="/admin" class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-brand-800 text-white flex items-center justify-center shadow-xs">
+          <i data-lucide="shield-check" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <span class="font-extrabold text-sm tracking-tight text-slate-900 block leading-tight">Admin Console</span>
+          <span class="text-[10px] font-semibold text-brand-700 uppercase tracking-wider block truncate max-w-[140px]"><%= venueName || 'Court Manager' %></span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="flex-1 p-3 space-y-1 text-xs font-semibold">
+      <div class="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Operations</div>
+
+      <a href="/admin" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition <%= currentPath === '/admin' ? 'bg-brand-50 text-brand-800 font-bold border border-brand-100' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' %>">
+        <i data-lucide="layout-dashboard" class="w-4 h-4 <%= currentPath === '/admin' ? 'text-brand-700' : 'text-slate-400' %>"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <a href="/admin/reservations" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition <%= currentPath.startsWith('/admin/reservations') ? 'bg-brand-50 text-brand-800 font-bold border border-brand-100' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' %>">
+        <i data-lucide="calendar-check" class="w-4 h-4 <%= currentPath.startsWith('/admin/reservations') ? 'text-brand-700' : 'text-slate-400' %>"></i>
+        <span>Reservations</span>
+      </a>
+
+      <a href="/admin/courts" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition <%= currentPath.startsWith('/admin/courts') ? 'bg-brand-50 text-brand-800 font-bold border border-brand-100' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' %>">
+        <i data-lucide="layout-grid" class="w-4 h-4 <%= currentPath.startsWith('/admin/courts') ? 'text-brand-700' : 'text-slate-400' %>"></i>
+        <span>Courts & Pricing</span>
+      </a>
+
+      <a href="/admin/blocks" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition <%= currentPath.startsWith('/admin/blocks') ? 'bg-brand-50 text-brand-800 font-bold border border-brand-100' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' %>">
+        <i data-lucide="ban" class="w-4 h-4 <%= currentPath.startsWith('/admin/blocks') ? 'text-brand-700' : 'text-slate-400' %>"></i>
+        <span>Block & Maintenance</span>
+      </a>
+
+      <div class="pt-4 px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Settings & Hubs</div>
+
+      <a href="/admin/venue-settings" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition <%= currentPath === '/admin/venue-settings' ? 'bg-brand-50 text-brand-800 font-bold border border-brand-100' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' %>">
+        <i data-lucide="sliders" class="w-4 h-4 <%= currentPath === '/admin/venue-settings' ? 'text-brand-700' : 'text-slate-400' %>"></i>
+        <span>Hours & Facility</span>
+      </a>
+
+      <a href="/admin/gcash" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition <%= currentPath === '/admin/gcash' ? 'bg-brand-50 text-brand-800 font-bold border border-brand-100' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' %>">
+        <i data-lucide="qr-code" class="w-4 h-4 <%= currentPath === '/admin/gcash' ? 'text-brand-700' : 'text-slate-400' %>"></i>
+        <span>GCash QR Code</span>
+      </a>
+
+      <a href="/admin/messenger" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition <%= currentPath === '/admin/messenger' ? 'bg-brand-50 text-brand-800 font-bold border border-brand-100' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' %>">
+        <i data-lucide="message-circle" class="w-4 h-4 <%= currentPath === '/admin/messenger' ? 'text-brand-700' : 'text-slate-400' %>"></i>
+        <span>Meta Messenger</span>
+      </a>
+
+      <a href="/admin/email" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition <%= currentPath === '/admin/email' ? 'bg-brand-50 text-brand-800 font-bold border border-brand-100' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' %>">
+        <i data-lucide="mail" class="w-4 h-4 <%= currentPath === '/admin/email' ? 'text-brand-700' : 'text-slate-400' %>"></i>
+        <span>Email & SMTP</span>
+      </a>
+    </nav>
+
+    <!-- Bottom User Profile & Live Link -->
+    <div class="p-4 border-t border-slate-100 bg-slate-50/50 space-y-2">
+      <a href="/" target="_blank" class="w-full btn-secondary-white text-xs py-2 justify-center shadow-2xs">
+        <i data-lucide="external-link" class="w-3.5 h-3.5 text-slate-500"></i>
+        <span>View Live Site</span>
+      </a>
+
+      <div class="flex items-center justify-between pt-2">
+        <div class="flex items-center gap-2 truncate">
+          <div class="w-7 h-7 rounded-full bg-brand-800 text-white flex items-center justify-center font-bold text-xs shrink-0">
+            <%= (currentUser && currentUser.name ? currentUser.name[0] : 'A').toUpperCase() %>
+          </div>
+          <span class="text-xs font-semibold text-slate-700 truncate"><%= currentUser ? currentUser.name : 'Administrator' %></span>
+        </div>
+        <a href="/admin/logout" title="Sign Out" class="text-slate-400 hover:text-rose-600 transition p-1">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <div class="flex-1 flex flex-col min-w-0 min-h-screen">
+    <!-- Topbar -->
+    <header class="h-16 bg-white/90 backdrop-blur-md border-b border-slate-200/90 px-6 flex items-center justify-between sticky top-0 z-30">
+      <div class="flex items-center gap-3">
+        <h1 class="text-base font-bold text-slate-900"><%= typeof pageTitle !== 'undefined' ? pageTitle : 'Dashboard' %></h1>
+      </div>
+      <div class="flex items-center gap-3 text-xs font-medium text-slate-500">
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/70">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          System Online
+        </span>
+      </div>
+    </header>
+
+    <!-- Flash Messages inside Admin -->
+    <% if (typeof success_msg !== 'undefined' && success_msg && success_msg.length > 0) { %>
+      <div class="px-6 pt-4">
+        <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl flex items-center gap-3 text-sm shadow-xs animate-pop-in">
+          <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 shrink-0"></i>
+          <span><%= success_msg %></span>
+        </div>
+      </div>
+    <% } %>
+
+    <% if (typeof error_msg !== 'undefined' && error_msg && error_msg.length > 0) { %>
+      <div class="px-6 pt-4">
+        <div class="bg-rose-50 border border-rose-200 text-rose-800 px-4 py-3 rounded-xl flex items-center gap-3 text-sm shadow-xs animate-pop-in">
+          <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-600 shrink-0"></i>
+          <span><%= error_msg %></span>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- Body -->
+    <main class="flex-1 p-6">
+      <%- body %>
+    </main>
+  </div>
+
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

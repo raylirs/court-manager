@@ -1,0 +1,169 @@
+<div class="space-y-6 animate-fade-in">
+
+  <!-- Overview Stat Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+    <!-- Total Revenue Card -->
+    <div class="glass-card p-5">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Bookings Value</span>
+        <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+          <i data-lucide="banknote" class="w-4 h-4"></i>
+        </div>
+      </div>
+      <div class="text-2xl font-extrabold text-slate-900 tracking-tight"><%= formatCurrency(stats.totalRevenue) %></div>
+      <span class="text-[11px] text-slate-500 mt-1 block">Confirmed & pending revenue</span>
+    </div>
+
+    <!-- Total Bookings Card -->
+    <div class="glass-card p-5">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Bookings</span>
+        <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center">
+          <i data-lucide="calendar" class="w-4 h-4"></i>
+        </div>
+      </div>
+      <div class="text-2xl font-extrabold text-slate-900 tracking-tight"><%= stats.totalBookings %></div>
+      <span class="text-[11px] text-slate-500 mt-1 block">All registered bookings</span>
+    </div>
+
+    <!-- Active Courts Card -->
+    <div class="glass-card p-5">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Active Courts</span>
+        <div class="w-8 h-8 rounded-xl bg-brand-50 text-brand-800 flex items-center justify-center">
+          <i data-lucide="layout-grid" class="w-4 h-4"></i>
+        </div>
+      </div>
+      <div class="text-2xl font-extrabold text-slate-900 tracking-tight"><%= stats.activeCourts %></div>
+      <span class="text-[11px] text-slate-500 mt-1 block">Ready for player bookings</span>
+    </div>
+
+    <!-- Pending Verification Card -->
+    <div class="glass-card p-5">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Pending Verification</span>
+        <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
+          <i data-lucide="clock" class="w-4 h-4"></i>
+        </div>
+      </div>
+      <div class="text-2xl font-extrabold text-amber-700 tracking-tight"><%= stats.pendingBookings %></div>
+      <span class="text-[11px] text-slate-500 mt-1 block">Requires GCash verification</span>
+    </div>
+
+  </div>
+
+  <!-- Today's Schedule & Recent Bookings -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- Recent Reservations Table (8 Cols) -->
+    <div class="lg:col-span-8 glass-card p-5 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <i data-lucide="calendar-check" class="w-4 h-4 text-brand-700"></i>
+          <h2 class="text-sm font-bold text-slate-900">Recent Reservations</h2>
+        </div>
+        <a href="/admin/reservations" class="text-xs font-semibold text-brand-800 hover:text-brand-900">View All &rarr;</a>
+      </div>
+
+      <% if (recentBookings.length === 0) { %>
+        <div class="p-8 text-center text-slate-400 text-xs">
+          No bookings placed yet.
+        </div>
+      <% } else { %>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="text-slate-400 font-bold uppercase text-[10px] border-b border-slate-100">
+                <th class="pb-2">Ref Code</th>
+                <th class="pb-2">Player</th>
+                <th class="pb-2">Court</th>
+                <th class="pb-2">Date & Time</th>
+                <th class="pb-2">Amount</th>
+                <th class="pb-2">Status</th>
+                <th class="pb-2 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 font-medium">
+              <% recentBookings.forEach(res => { %>
+                <tr class="hover:bg-slate-50/50 transition">
+                  <td class="py-3 font-mono-code font-bold text-brand-800"><%= res.reference_code %></td>
+                  <td class="py-3 font-bold text-slate-900"><%= res.player_name %></td>
+                  <td class="py-3 text-slate-600"><%= res.court ? res.court.name : 'Court #' + res.court_id %></td>
+                  <td class="py-3 text-slate-600">
+                    <span class="block text-slate-900 font-semibold"><%= res.booking_date %></span>
+                    <span class="text-[11px] text-slate-400 font-mono-code"><%= formatTime12(res.start_time) %> - <%= formatTime12(res.end_time) %></span>
+                  </td>
+                  <td class="py-3 font-bold text-slate-900"><%= formatCurrency(res.total_price) %></td>
+                  <td class="py-3">
+                    <% if (res.payment_status === 'confirmed') { %>
+                      <span class="badge-confirmed text-[11px]">Confirmed</span>
+                    <% } else if (res.payment_status === 'pending_payment') { %>
+                      <span class="badge-pending text-[11px]">Pending</span>
+                    <% } else { %>
+                      <span class="badge-cancelled text-[11px]"><%= res.payment_status %></span>
+                    <% } %>
+                  </td>
+                  <td class="py-3 text-right">
+                    <a href="/admin/reservations?q=<%= res.reference_code %>" class="text-xs text-brand-800 hover:text-brand-900 font-bold">Manage</a>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Quick Actions & System Info (4 Cols) -->
+    <div class="lg:col-span-4 space-y-4">
+      <div class="glass-card p-5 space-y-3">
+        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <i data-lucide="zap" class="w-4 h-4 text-amber-500"></i>
+          <span>Facility Shortcuts</span>
+        </h3>
+        <div class="grid grid-cols-1 gap-2 text-xs">
+          <a href="/admin/courts/new" class="btn-primary-green justify-start py-2.5 text-xs">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span>Add New Court / Photo</span>
+          </a>
+          <a href="/admin/blocks" class="btn-secondary-white justify-start py-2.5 text-xs">
+            <i data-lucide="calendar-x" class="w-4 h-4 text-slate-500"></i>
+            <span>Block Time for Tournament</span>
+          </a>
+          <a href="/admin/gcash" class="btn-secondary-white justify-start py-2.5 text-xs">
+            <i data-lucide="qr-code" class="w-4 h-4 text-slate-500"></i>
+            <span>Update GCash QR Code</span>
+          </a>
+          <a href="/admin/messenger" class="btn-secondary-white justify-start py-2.5 text-xs">
+            <i data-lucide="message-circle" class="w-4 h-4 text-slate-500"></i>
+            <span>Configure Facebook Alerts</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Facility Operational Profile -->
+      <div class="glass-card p-5 space-y-2.5 text-xs">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Current Schedule Settings</h3>
+        <div class="flex justify-between py-1 border-b border-slate-100">
+          <span class="text-slate-500">Operating Hours:</span>
+          <span class="font-bold text-slate-800 font-mono-code"><%= formatTime12(settings.OPEN_TIME || '06:00') %> - <%= formatTime12(settings.CLOSE_TIME || '22:00') %></span>
+        </div>
+        <div class="flex justify-between py-1 border-b border-slate-100">
+          <span class="text-slate-500">Slot Duration:</span>
+          <span class="font-bold text-slate-800"><%= settings.SLOT_DURATION || '60' %> Minutes</span>
+        </div>
+        <div class="flex justify-between py-1 border-b border-slate-100">
+          <span class="text-slate-500">Messenger Alerts:</span>
+          <span class="font-bold text-slate-800"><%= settings.FB_PAGE_TOKEN ? 'Connected' : 'Not configured' %></span>
+        </div>
+        <div class="flex justify-between pt-1">
+          <span class="text-slate-500">Email Alerts:</span>
+          <span class="font-bold text-slate-800"><%= settings.SMTP_USER ? 'Connected' : 'Not configured' %></span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>

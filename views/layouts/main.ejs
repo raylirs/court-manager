@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title + ' | ' : '' %><%= venueName || 'Court Manager' %></title>
+  <meta name="description" content="Reserve courts, check real-time availability, and secure booking with instant GCash payment.">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts & Custom CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f7f2',
+              100: '#dcecdb',
+              200: '#b7d8bd',
+              500: '#349348',
+              600: '#287938',
+              700: '#1e5c2b',
+              800: '#166534',
+              900: '#0f3d1e'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="flex flex-col min-h-screen antialiased text-slate-800">
+
+  <!-- Navigation Bar -->
+  <header class="bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40 shadow-xs">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <!-- Logo & Venue Name -->
+      <a href="/" class="flex items-center gap-2.5 text-slate-900 group">
+        <div class="w-10 h-10 rounded-xl bg-brand-800 text-white flex items-center justify-center shadow-sm group-hover:bg-brand-700 transition">
+          <i data-lucide="trophy" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <span class="font-extrabold text-base tracking-tight block leading-tight text-slate-900"><%= venueName || 'Court Manager' %></span>
+          <span class="text-[11px] font-medium text-slate-500 uppercase tracking-wider block">Court Booking & Facilities</span>
+        </div>
+      </a>
+
+      <!-- Public Navigation Links -->
+      <nav class="flex items-center gap-2 sm:gap-4">
+        <a href="/" class="px-3.5 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:text-brand-800 hover:bg-slate-100/80 transition flex items-center gap-1.5">
+          <i data-lucide="calendar" class="w-4 h-4 text-brand-700"></i>
+          <span>Reserve</span>
+        </a>
+        <a href="/lookup" class="px-3.5 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:text-brand-800 hover:bg-slate-100/80 transition flex items-center gap-1.5">
+          <i data-lucide="search" class="w-4 h-4 text-slate-500"></i>
+          <span>Check Booking</span>
+        </a>
+        <a href="/admin" class="ml-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition flex items-center gap-1.5 border border-slate-200">
+          <i data-lucide="lock" class="w-3.5 h-3.5 text-slate-500"></i>
+          <span>Admin Portal</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Flash Messages -->
+  <% if (typeof success_msg !== 'undefined' && success_msg && success_msg.length > 0) { %>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-4 w-full">
+      <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl flex items-center gap-3 text-sm shadow-xs animate-pop-in">
+        <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 shrink-0"></i>
+        <span><%= success_msg %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <% if (typeof error_msg !== 'undefined' && error_msg && error_msg.length > 0) { %>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-4 w-full">
+      <div class="bg-rose-50 border border-rose-200 text-rose-800 px-4 py-3 rounded-xl flex items-center gap-3 text-sm shadow-xs animate-pop-in">
+        <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-600 shrink-0"></i>
+        <span><%= error_msg %></span>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Main Content -->
+  <main class="flex-1 py-8 px-4 sm:px-6">
+    <div class="max-w-6xl mx-auto">
+      <%- body %>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200/80 py-8 px-4 text-slate-500 text-xs mt-auto">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <div class="w-6 h-6 rounded-md bg-brand-800 text-white flex items-center justify-center text-xs font-bold">
+          <i data-lucide="trophy" class="w-3.5 h-3.5"></i>
+        </div>
+        <span>&copy; <%= new Date().getFullYear() %> <%= venueName || 'Court Manager' %>. Powered by Court Manager Pro.</span>
+      </div>
+      <div class="flex items-center gap-4 text-slate-500">
+        <a href="/" class="hover:text-slate-800 transition">Bookings</a>
+        <span>&bull;</span>
+        <a href="/lookup" class="hover:text-slate-800 transition">Lookup</a>
+        <span>&bull;</span>
+        <a href="/admin" class="hover:text-slate-800 transition">Staff Login</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

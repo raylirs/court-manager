@@ -1,0 +1,97 @@
+<div class="space-y-6 animate-fade-in">
+
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+    <div>
+      <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">Court Blocking & Maintenance</h2>
+      <p class="text-xs text-slate-500">Block specific courts or all courts for tournaments, private coaching, or facility repairs.</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+    <!-- Add Block Form (4 cols) -->
+    <div class="lg:col-span-5 glass-card p-6 space-y-4">
+      <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2 pb-2 border-b border-slate-100">
+        <i data-lucide="ban" class="w-4 h-4 text-rose-600"></i>
+        <span>Create Time Block</span>
+      </h3>
+
+      <form action="/admin/blocks" method="POST" class="space-y-4">
+        <div>
+          <label class="form-label">Target Court</label>
+          <select name="court_id" class="form-select text-xs">
+            <option value="">All Courts (Whole Facility)</option>
+            <% courts.forEach(c => { %>
+              <option value="<%= c.id %>"><%= c.name %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label">Date to Block <span class="text-rose-500">*</span></label>
+          <input type="date" name="block_date" required value="<%= today %>" class="form-input text-xs">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="form-label">Start Time <span class="text-rose-500">*</span></label>
+            <input type="time" name="start_time" required value="08:00" class="form-input text-xs font-mono-code">
+          </div>
+          <div>
+            <label class="form-label">End Time <span class="text-rose-500">*</span></label>
+            <input type="time" name="end_time" required value="12:00" class="form-input text-xs font-mono-code">
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label">Reason / Notes</label>
+          <input type="text" name="reason" placeholder="e.g. Surface cleaning / Invitational League" class="form-input text-xs">
+        </div>
+
+        <button type="submit" class="btn-primary-green w-full py-2.5 text-xs font-bold shadow-sm">
+          <i data-lucide="shield-alert" class="w-4 h-4"></i>
+          <span>Save & Block Time Slot</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Active Blocks List (7 cols) -->
+    <div class="lg:col-span-7 glass-card p-6 space-y-4">
+      <h3 class="text-sm font-bold text-slate-900 flex items-center justify-between pb-2 border-b border-slate-100">
+        <span>Active & Scheduled Blocks (<%= blocks.length %>)</span>
+      </h3>
+
+      <% if (blocks.length === 0) { %>
+        <div class="p-8 text-center text-slate-400 text-xs">
+          No courts are currently blocked.
+        </div>
+      <% } else { %>
+        <div class="space-y-3">
+          <% blocks.forEach(block => { %>
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/90 flex items-center justify-between">
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="font-bold text-xs text-slate-900"><%= block.court ? block.court.name : 'All Facility Courts' %></span>
+                  <span class="badge-cancelled text-[10px]"><i data-lucide="lock" class="w-2.5 h-2.5"></i> Blocked</span>
+                </div>
+                <div class="text-[11px] text-slate-600 space-x-2">
+                  <span>📅 <%= formatDateDisplay(block.block_date) %></span>
+                  <span>⏰ <%= formatTime12(block.start_time) %> - <%= formatTime12(block.end_time) %></span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-1 italic font-medium"><%= block.reason || 'Maintenance' %></p>
+              </div>
+
+              <form action="/admin/blocks/<%= block.id %>/delete" method="POST" onsubmit="return confirm('Remove this block and reopen slots?');">
+                <button type="submit" class="p-2 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-white transition" title="Unblock">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </form>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+
+  </div>
+
+</div>

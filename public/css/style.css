@@ -1,0 +1,233 @@
+/* Corporate Forest Green Light Theme (Matches Forticlient / PKI NetGuardian Design System) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes spin { 
+  to { transform: rotate(360deg); } 
+}
+
+.animate-fade-in { animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-pop-in { animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+:root {
+  --brand-green-50: #f0f7f2;
+  --brand-green-100: #dcecdb;
+  --brand-green-500: #349348;
+  --brand-green-600: #287938;
+  --brand-green-700: #1e5c2b;
+  --brand-green-800: #166534;
+  --brand-green-900: #0f3d1e;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: radial-gradient(circle at 50% 0%, #e2f0d9 0%, #f4f9f1 40%, #ffffff 100%) !important;
+  color: #1e293b;
+  min-height: 100vh;
+}
+
+/* Custom Thin Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Modern Input & Card Styling */
+.form-label {
+  display: block;
+  font-size: 0.785rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 0.35rem;
+  text-align: left;
+}
+
+.form-input, .form-select {
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.625rem;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.875rem;
+  color: #0f172a;
+  transition: all 0.15s ease-in-out;
+}
+
+.form-input:hover, .form-select:hover {
+  background-color: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.form-input:focus, .form-select:focus {
+  outline: none;
+  background-color: #ffffff;
+  border-color: #166534;
+  box-shadow: 0 0 0 3px rgba(22, 101, 52, 0.12);
+}
+
+.btn-primary-green {
+  background-color: #287938;
+  color: #ffffff;
+  font-weight: 600;
+  border-radius: 0.625rem;
+  padding: 0.625rem 1.25rem;
+  transition: all 0.15s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-primary-green:hover:not(:disabled) {
+  background-color: #1e5c2b;
+  box-shadow: 0 4px 12px rgba(40, 121, 56, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-primary-green:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-primary-green:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-secondary-white {
+  background-color: #ffffff;
+  color: #334155;
+  font-weight: 600;
+  border-radius: 0.625rem;
+  padding: 0.625rem 1.25rem;
+  border: 1px solid #cbd5e1;
+  transition: all 0.15s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-secondary-white:hover {
+  background-color: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+/* Glass & Card Aesthetics */
+.glass-card {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: 1.25rem;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04), 0 2px 8px -2px rgba(0, 0, 0, 0.02);
+}
+
+.glass-card-hover {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 35px -5px rgba(30, 92, 43, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+  border-color: rgba(40, 121, 56, 0.3);
+}
+
+.font-mono-code {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Slot selection button states */
+.time-slot-btn {
+  border: 1.5px solid #e2e8f0;
+  background-color: #ffffff;
+  border-radius: 0.75rem;
+  padding: 0.75rem 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.time-slot-btn:hover:not(.disabled):not(.selected) {
+  border-color: #287938;
+  background-color: #f0f7f2;
+  color: #166534;
+}
+
+.time-slot-btn.selected {
+  border-color: #287938;
+  background-color: #166534;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(22, 101, 52, 0.25);
+}
+
+.time-slot-btn.disabled {
+  opacity: 0.4;
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+/* Status Badges */
+.badge-confirmed {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.badge-pending {
+  background-color: #fef9c3;
+  color: #854d0e;
+  border: 1px solid #fef08a;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.badge-cancelled {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
