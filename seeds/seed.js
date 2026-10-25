@@ -17,8 +17,8 @@ async function seed() {
   }
 
   // 1. Create or Update Platform Superadmin
-  const superadminEmail = process.env.ADMIN_EMAIL || 'admin@courtmanager.com';
-  const superadminPass = process.env.ADMIN_PASSWORD || 'AdminPassword123!';
+  const superadminEmail = process.env.ADMIN_EMAIL || 'cpe4ryan@gmail.com';
+  const superadminPass = process.env.ADMIN_PASSWORD || 'admin123';
   const superHashed = await bcrypt.hash(superadminPass, 10);
 
   const [superadmin, superCreated] = await User.findOrCreate({
