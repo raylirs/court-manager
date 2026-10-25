@@ -55,8 +55,8 @@ Production-ready, multi-court reservation and facility management platform built
    - Public Booking Portal: `http://localhost:3000`
    - Admin Console: `http://localhost:3000/admin`
    - Default Admin Credentials:
-     - **Email:** `admin@courtmanager.com`
-     - **Password:** `AdminPassword123!`
+     - **Email:** `cpe4ryan@gmail.com`
+     - **Password:** `admin123`
 
 ---
 
@@ -90,6 +90,6 @@ git push -u origin main
    - `DATABASE_URL` = (Your Supabase PostgreSQL Connection URI)
    - `NODE_ENV` = `production`
    - `SESSION_SECRET` = (A random string, e.g. `court_manager_prod_secret_84920`)
-   - `ADMIN_EMAIL` = `admin@courtmanager.com`
-   - `ADMIN_PASSWORD` = (Your chosen secure admin password)
+   - `ADMIN_EMAIL` = `cpe4ryan@gmail.com`
+   - `ADMIN_PASSWORD` = `admin123`
 6. Click **Deploy Web Service**! Render will build and deploy the app with automatic HTTPS.
