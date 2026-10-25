@@ -601,4 +601,10 @@ router.post('/email/test', async (req, res) => {
   res.redirect('/admin/email');
 });
 
+// ===================== SETUP GUIDES & DOCUMENTATION =====================
+
+router.get('/guides', (req, res) => {
+  res.render('admin/guides', { pageTitle: 'Setup Guides & Documentation' });
+});
+
 module.exports = router;

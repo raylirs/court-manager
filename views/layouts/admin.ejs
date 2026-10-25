@@ -126,6 +126,13 @@
         <i data-lucide="mail" class="w-4 h-4 <%= currentPath === '/admin/email' ? 'text-brand-700' : 'text-slate-400' %>"></i>
         <span>Email & SMTP</span>
       </a>
+
+      <div class="pt-4 px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Help & Documentation</div>
+
+      <a href="/admin/guides" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition <%= currentPath === '/admin/guides' ? 'bg-brand-50 text-brand-800 font-bold border border-brand-100' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' %>">
+        <i data-lucide="book-open" class="w-4 h-4 <%= currentPath === '/admin/guides' ? 'text-brand-700' : 'text-slate-400' %>"></i>
+        <span>Setup Guides</span>
+      </a>
     </nav>
 
     <!-- Bottom User Profile & Live Link -->
