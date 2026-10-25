@@ -35,6 +35,7 @@ async function resolveCurrentVenue(req) {
 
 // Middleware to inject admin locals
 router.use(async (req, res, next) => {
+  res.locals.layout = 'layouts/admin';
   res.locals.currentPath = req.path;
   res.locals.currentUser = req.session ? req.session.user : null;
   res.locals.formatCurrency = formatCurrency;
