@@ -7,6 +7,14 @@ const Reservation = sequelize.define('Reservation', {
     primaryKey: true,
     autoIncrement: true
   },
+  venue_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'venues',
+      key: 'id'
+    }
+  },
   reference_code: {
     type: DataTypes.STRING(30),
     allowNull: false,
@@ -25,11 +33,11 @@ const Reservation = sequelize.define('Reservation', {
     allowNull: false
   },
   start_time: {
-    type: DataTypes.STRING(10), // e.g. "09:00"
+    type: DataTypes.STRING(10),
     allowNull: false
   },
   end_time: {
-    type: DataTypes.STRING(10), // e.g. "11:00"
+    type: DataTypes.STRING(10),
     allowNull: false
   },
   duration_hours: {

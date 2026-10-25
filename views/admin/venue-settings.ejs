@@ -1,8 +1,8 @@
 <div class="max-w-3xl mx-auto space-y-6 animate-fade-in">
 
   <div class="pb-4 border-b border-slate-200">
-    <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">Facility Profile & Operating Hours</h2>
-    <p class="text-xs text-slate-500">Configure your facility's daily opening and closing hours, slot intervals, address, and branding.</p>
+    <h2 class="text-xl font-extrabold text-slate-900 tracking-tight"><%= currentVenue ? currentVenue.name : 'Facility' %> Profile & Operating Hours</h2>
+    <p class="text-xs text-slate-500">Configure daily opening and closing hours, slot intervals, address, and venue information.</p>
   </div>
 
   <div class="glass-card p-6 sm:p-8">
@@ -12,28 +12,33 @@
       <div>
         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
           <i data-lucide="building" class="w-3.5 h-3.5"></i>
-          Facility Identity
+          Facility Details
         </h3>
         <div class="space-y-4">
           <div>
-            <label class="form-label">Facility / Club Name <span class="text-rose-500">*</span></label>
-            <input type="text" name="VENUE_NAME" required value="<%= settings.VENUE_NAME || '' %>" placeholder="e.g. The Playground Pickleball Club" class="form-input">
+            <label class="form-label">Venue / Club Name <span class="text-rose-500">*</span></label>
+            <input type="text" name="name" required value="<%= currentVenue ? currentVenue.name : '' %>" placeholder="e.g. The Playground Pickleball Club" class="form-input">
           </div>
 
           <div>
-            <label class="form-label">Short Description / Subtitle</label>
-            <textarea name="VENUE_DESCRIPTION" rows="2" placeholder="e.g. Premier indoor and outdoor pickleball courts equipped with professional acrylic surfaces and LED lighting." class="form-input"><%= settings.VENUE_DESCRIPTION || '' %></textarea>
+            <label class="form-label">Facility Description</label>
+            <textarea name="description" rows="2" placeholder="e.g. Premier indoor and outdoor pickleball courts equipped with professional acrylic surfaces." class="form-input"><%= currentVenue ? currentVenue.description : '' %></textarea>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="form-label">Physical Address</label>
-              <input type="text" name="VENUE_ADDRESS" value="<%= settings.VENUE_ADDRESS || '' %>" placeholder="e.g. 123 Sports Complex Way, Taguig City" class="form-input">
+              <input type="text" name="address" value="<%= currentVenue ? currentVenue.address : '' %>" placeholder="e.g. 123 Sports Complex Way, Taguig City" class="form-input">
             </div>
             <div>
-              <label class="form-label">Contact Number / Hotline</label>
-              <input type="text" name="VENUE_PHONE" value="<%= settings.VENUE_PHONE || '' %>" placeholder="e.g. (02) 8888-1234 / 0917-123-4567" class="form-input font-mono-code">
+              <label class="form-label">Contact Phone / Mobile</label>
+              <input type="text" name="contact_phone" value="<%= currentVenue ? currentVenue.contact_phone : '' %>" placeholder="e.g. 0917-xxx-xxxx" class="form-input font-mono-code">
             </div>
+          </div>
+
+          <div>
+            <label class="form-label">Contact Email</label>
+            <input type="email" name="contact_email" value="<%= currentVenue ? currentVenue.contact_email : '' %>" placeholder="contact@venue.com" class="form-input">
           </div>
         </div>
       </div>
@@ -48,22 +53,22 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label class="form-label">Daily Open Time <span class="text-rose-500">*</span></label>
-            <input type="time" name="OPEN_TIME" required value="<%= settings.OPEN_TIME || '06:00' %>" class="form-input font-mono-code text-xs">
+            <input type="time" name="open_time" required value="<%= currentVenue ? currentVenue.open_time : '06:00' %>" class="form-input font-mono-code text-xs">
             <span class="text-[10px] text-slate-400 mt-1 block">Earliest booking slot start</span>
           </div>
 
           <div>
             <label class="form-label">Daily Close Time <span class="text-rose-500">*</span></label>
-            <input type="time" name="CLOSE_TIME" required value="<%= settings.CLOSE_TIME || '22:00' %>" class="form-input font-mono-code text-xs">
+            <input type="time" name="close_time" required value="<%= currentVenue ? currentVenue.close_time : '22:00' %>" class="form-input font-mono-code text-xs">
             <span class="text-[10px] text-slate-400 mt-1 block">Latest booking slot finish</span>
           </div>
 
           <div>
             <label class="form-label">Slot Duration <span class="text-rose-500">*</span></label>
-            <select name="SLOT_DURATION" class="form-select text-xs">
-              <option value="60" <%= (settings.SLOT_DURATION === '60' || !settings.SLOT_DURATION) ? 'selected' : '' %>>60 Minutes (1 Hour)</option>
-              <option value="90" <%= settings.SLOT_DURATION === '90' ? 'selected' : '' %>>90 Minutes (1.5 Hours)</option>
-              <option value="120" <%= settings.SLOT_DURATION === '120' ? 'selected' : '' %>>120 Minutes (2 Hours)</option>
+            <select name="slot_duration" class="form-select text-xs">
+              <option value="60" <%= (currentVenue && currentVenue.slot_duration === 60) ? 'selected' : '' %>>60 Minutes (1 Hour)</option>
+              <option value="90" <%= (currentVenue && currentVenue.slot_duration === 90) ? 'selected' : '' %>>90 Minutes (1.5 Hours)</option>
+              <option value="120" <%= (currentVenue && currentVenue.slot_duration === 120) ? 'selected' : '' %>>120 Minutes (2 Hours)</option>
             </select>
             <span class="text-[10px] text-slate-400 mt-1 block">Incremental slot block size</span>
           </div>
@@ -73,7 +78,7 @@
       <div class="pt-4 border-t border-slate-100 flex justify-end">
         <button type="submit" class="btn-primary-green py-2.5 px-6 text-xs font-bold shadow-sm">
           <i data-lucide="check" class="w-4 h-4"></i>
-          <span>Save Profile & Schedule</span>
+          <span>Save Venue Profile</span>
         </button>
       </div>
 

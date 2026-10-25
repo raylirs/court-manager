@@ -7,6 +7,14 @@ const Court = sequelize.define('Court', {
     primaryKey: true,
     autoIncrement: true
   },
+  venue_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'venues',
+      key: 'id'
+    }
+  },
   name: {
     type: DataTypes.STRING(100),
     allowNull: false

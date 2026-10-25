@@ -2,7 +2,7 @@
 
   <div class="pb-4 border-b border-slate-200">
     <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">GCash Payment & QR Code Hub</h2>
-    <p class="text-xs text-slate-500">Upload your official GCash QR Code, configure merchant account details, and manage customer payout settings.</p>
+    <p class="text-xs text-slate-500">Configure GCash QR Code and payout account for <strong><%= currentVenue ? currentVenue.name : 'this venue' %></strong>.</p>
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -23,13 +23,13 @@
 
         <div>
           <label class="form-label">Merchant GCash Account Name <span class="text-rose-500">*</span></label>
-          <input type="text" name="GCASH_ACCOUNT_NAME" required value="<%= settings.GCASH_ACCOUNT_NAME || '' %>" placeholder="e.g. JUAN DE LA CRUZ / THE PLAYGROUND" class="form-input">
-          <p class="text-[10px] text-slate-400 mt-1">Displayed below the QR code so customers verify recipient accuracy.</p>
+          <input type="text" name="gcash_account_name" required value="<%= currentVenue ? currentVenue.gcash_account_name || '' : '' %>" placeholder="e.g. JUAN DE LA CRUZ / THE PLAYGROUND" class="form-input">
+          <p class="text-[10px] text-slate-400 mt-1">Displayed below the QR code on customer checkout.</p>
         </div>
 
         <div>
           <label class="form-label">GCash Mobile Contact / Number</label>
-          <input type="text" name="GCASH_ACCOUNT_NUMBER" value="<%= settings.GCASH_ACCOUNT_NUMBER || '' %>" placeholder="e.g. 0917-xxx-xxxx" class="form-input font-mono-code">
+          <input type="text" name="gcash_account_number" value="<%= currentVenue ? currentVenue.gcash_account_number || '' : '' %>" placeholder="e.g. 0917-xxx-xxxx" class="form-input font-mono-code">
           <p class="text-[10px] text-slate-400 mt-1">Fallback mobile number for customers transferring manually.</p>
         </div>
 
@@ -45,31 +45,31 @@
     <!-- Live Preview Column (5 cols) -->
     <div class="lg:col-span-5 glass-card p-6 text-center space-y-4">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100 text-left">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Live Customer Preview</h3>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Live Customer Checkout Preview</h3>
         <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Live Checkout</span>
       </div>
 
       <div class="p-4 bg-slate-50 rounded-xl border border-slate-200/90 inline-block w-full">
-        <% if (settings.GCASH_QR_IMAGE) { %>
-          <img src="<%= settings.GCASH_QR_IMAGE %>" alt="Active QR Code" class="w-48 h-48 object-contain mx-auto rounded-lg shadow-2xs border border-slate-200 mb-2">
+        <% if (currentVenue && currentVenue.gcash_qr_image) { %>
+          <img src="<%= currentVenue.gcash_qr_image %>" alt="Active QR Code" class="w-48 h-48 object-contain mx-auto rounded-lg shadow-2xs border border-slate-200 mb-2">
         <% } else { %>
           <div class="w-48 h-48 bg-white border border-dashed border-slate-300 rounded-lg mx-auto flex flex-col items-center justify-center text-slate-400 mb-2">
             <i data-lucide="image" class="w-10 h-10 mb-1 text-slate-300"></i>
-            <span class="text-[11px] font-semibold">No QR Uploaded</span>
+            <span class="text-[11px] font-semibold">No QR Uploaded Yet</span>
           </div>
         <% } %>
 
         <div class="space-y-0.5 text-xs mt-3">
           <span class="text-[10px] text-slate-400 block uppercase tracking-wider font-semibold">Merchant Account</span>
-          <span class="font-extrabold text-slate-900 block"><%= settings.GCASH_ACCOUNT_NAME || 'Not Configured' %></span>
-          <% if (settings.GCASH_ACCOUNT_NUMBER) { %>
-            <span class="font-mono-code text-slate-600 font-semibold block text-[11px]"><%= settings.GCASH_ACCOUNT_NUMBER %></span>
+          <span class="font-extrabold text-slate-900 block"><%= (currentVenue && currentVenue.gcash_account_name) ? currentVenue.gcash_account_name : 'Not Configured' %></span>
+          <% if (currentVenue && currentVenue.gcash_account_number) { %>
+            <span class="font-mono-code text-slate-600 font-semibold block text-[11px]"><%= currentVenue.gcash_account_number %></span>
           <% } %>
         </div>
       </div>
 
       <p class="text-[11px] text-slate-400 leading-relaxed">
-        This is the exact QR code and merchant details displayed to players on the checkout page.
+        Customers booking courts at <%= currentVenue ? currentVenue.name : 'your venue' %> will see this exact QR code and merchant details.
       </p>
     </div>
 

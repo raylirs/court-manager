@@ -3,7 +3,7 @@
   <div class="pb-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
       <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">Meta Facebook Messenger Notification Hub</h2>
-      <p class="text-xs text-slate-500">Connect your Facebook Page & Meta App to receive instant Messenger booking alerts on your personal Facebook profile.</p>
+      <p class="text-xs text-slate-500">Connect Facebook Page alerts for <strong><%= currentVenue ? currentVenue.name : 'this venue' %></strong>.</p>
     </div>
     <div class="flex items-center gap-2">
       <a href="https://developers.facebook.com/apps" target="_blank" class="btn-secondary-white py-1.5 px-3 text-xs">
@@ -26,10 +26,10 @@
         <div class="flex items-center justify-between p-3 bg-brand-50 rounded-xl border border-brand-100">
           <div>
             <span class="text-xs font-bold text-brand-900 block">Messenger Push Alerts</span>
-            <span class="text-[11px] text-brand-700 block">Send instant Facebook Messenger ping upon new court booking</span>
+            <span class="text-[11px] text-brand-700 block">Send instant Messenger booking alert to <%= currentVenue ? currentVenue.name : 'venue' %> managers</span>
           </div>
           <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" name="FB_NOTIFICATIONS_ENABLED" value="true" <%= settings.FB_NOTIFICATIONS_ENABLED !== 'false' ? 'checked' : '' %> class="sr-only peer">
+            <input type="checkbox" name="fb_enabled" value="true" <%= (currentVenue && currentVenue.fb_enabled) ? 'checked' : '' %> class="sr-only peer">
             <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-800"></div>
           </label>
         </div>
@@ -37,34 +37,33 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="form-label">Facebook App ID</label>
-            <input type="text" name="FB_APP_ID" value="<%= settings.FB_APP_ID || '' %>" placeholder="e.g. 1573381463838687" class="form-input font-mono-code text-xs">
+            <input type="text" name="fb_app_id" value="<%= currentVenue ? currentVenue.fb_app_id || '' : '' %>" placeholder="e.g. 1573381463838687" class="form-input font-mono-code text-xs">
           </div>
           <div>
             <label class="form-label">Facebook App Secret</label>
-            <input type="password" name="FB_APP_SECRET" value="<%= settings.FB_APP_SECRET || '' %>" placeholder="••••••••••••••••" class="form-input font-mono-code text-xs">
+            <input type="password" name="fb_app_secret" value="<%= currentVenue ? currentVenue.fb_app_secret || '' : '' %>" placeholder="••••••••••••••••" class="form-input font-mono-code text-xs">
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="form-label">Facebook Page ID</label>
-            <input type="text" name="FB_PAGE_ID" value="<%= settings.FB_PAGE_ID || '' %>" placeholder="e.g. 102938475618293" class="form-input font-mono-code text-xs">
+            <input type="text" name="fb_page_id" value="<%= currentVenue ? currentVenue.fb_page_id || '' : '' %>" placeholder="e.g. 102938475618293" class="form-input font-mono-code text-xs">
           </div>
           <div>
             <label class="form-label">Facebook Page Name</label>
-            <input type="text" name="FB_PAGE_NAME" value="<%= settings.FB_PAGE_NAME || '' %>" placeholder="e.g. The Playground Pickleball" class="form-input text-xs">
+            <input type="text" name="fb_page_name" value="<%= currentVenue ? currentVenue.fb_page_name || '' : '' %>" placeholder="e.g. The Playground Pickleball" class="form-input text-xs">
           </div>
         </div>
 
         <div>
           <label class="form-label">Permanent Page Access Token</label>
-          <textarea name="FB_PAGE_TOKEN" rows="3" placeholder="EAAB... (Paste Page Access Token from Graph API Explorer)" class="form-input font-mono-code text-xs"><%= settings.FB_PAGE_TOKEN || '' %></textarea>
-          <p class="text-[10px] text-slate-400 mt-1">Generated from Graph API Explorer or Meta App Messenger product settings.</p>
+          <textarea name="fb_page_token" rows="3" placeholder="EAAB... (Paste Page Access Token from Graph API Explorer)" class="form-input font-mono-code text-xs"><%= currentVenue ? currentVenue.fb_page_token || '' : '' %></textarea>
         </div>
 
         <div>
           <label class="form-label">Admin Profile PSID(s) (Comma-separated)</label>
-          <input type="text" name="FB_ADMIN_PSIDS" value="<%= settings.FB_ADMIN_PSIDS || '' %>" placeholder="e.g. 827361524389102, 918273645102938" class="form-input font-mono-code text-xs">
+          <input type="text" name="fb_admin_psids" value="<%= currentVenue ? currentVenue.fb_admin_psids || '' : '' %>" placeholder="e.g. 827361524389102" class="form-input font-mono-code text-xs">
           <p class="text-[10px] text-slate-400 mt-1">Your Page-Scoped ID (PSID) received when messaging your Facebook Page.</p>
         </div>
 
@@ -87,7 +86,7 @@
       <form action="/admin/messenger/test" method="POST" class="space-y-3">
         <div>
           <label class="form-label">Target Admin PSID for Test</label>
-          <input type="text" name="test_psid" required placeholder="Enter PSID to ping" value="<%= (settings.FB_ADMIN_PSIDS || '').split(',')[0].trim() %>" class="form-input font-mono-code text-xs">
+          <input type="text" name="test_psid" required placeholder="Enter PSID to ping" value="<%= (currentVenue && currentVenue.fb_admin_psids) ? currentVenue.fb_admin_psids.split(',')[0].trim() : '' %>" class="form-input font-mono-code text-xs">
         </div>
 
         <button type="submit" class="btn-secondary-white w-full py-2.5 text-xs font-bold">
@@ -95,16 +94,6 @@
           <span>Send Test Messenger Ping</span>
         </button>
       </form>
-
-      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-600 space-y-1.5">
-        <span class="font-bold text-slate-800 block flex items-center gap-1">
-          <i data-lucide="help-circle" class="w-3.5 h-3.5 text-brand-700"></i>
-          How to get your PSID:
-        </span>
-        <p>1. Send a quick "hi" from your personal Facebook Messenger to your business Page.</p>
-        <p>2. In Meta Graph API Explorer, query: <code>/{PAGE_ID}/conversations?fields=participants</code>.</p>
-        <p>3. Copy your participant <code>id</code> into the PSID field above!</p>
-      </div>
     </div>
 
   </div>

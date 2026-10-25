@@ -1,112 +1,154 @@
 const bcrypt = require('bcryptjs');
-const { sequelize, Court, Reservation, CourtBlock, SystemSetting, User } = require('../models');
+const { sequelize, Venue, Court, Reservation, CourtBlock, SystemSetting, User } = require('../models');
 const fs = require('fs');
 const path = require('path');
 
 async function seed() {
-  console.log('--- Initializing Court Manager Database Sync & Seed ---');
+  console.log('--- Initializing Court Manager Multi-Tenant Database Sync & Seed ---');
 
-  // Sync all database tables
+  // Sync database with alter
   await sequelize.sync({ alter: true });
   console.log('✓ Database tables synchronized.');
 
-  // Ensure public/uploads exists
+  // Ensure uploads directory exists
   const uploadsDir = path.join(__dirname, '../public/uploads');
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
 
-  // 1. Seed or update default admin user
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@courtmanager.com';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'AdminPassword123!';
-  const hashedPassword = await bcrypt.hash(adminPassword, 10);
+  // 1. Create or Update Platform Superadmin
+  const superadminEmail = process.env.ADMIN_EMAIL || 'admin@courtmanager.com';
+  const superadminPass = process.env.ADMIN_PASSWORD || 'AdminPassword123!';
+  const superHashed = await bcrypt.hash(superadminPass, 10);
 
-  const [adminUser, userCreated] = await User.findOrCreate({
-    where: { email: adminEmail },
+  const [superadmin, superCreated] = await User.findOrCreate({
+    where: { email: superadminEmail.trim().toLowerCase() },
     defaults: {
-      name: process.env.ADMIN_NAME || 'Court Manager Admin',
-      email: adminEmail,
-      password_hash: hashedPassword,
-      role: 'admin',
+      name: 'Platform Superadmin',
+      email: superadminEmail.trim().toLowerCase(),
+      password_hash: superHashed,
+      role: 'superadmin',
+      venue_id: null,
       is_active: true
     }
   });
 
-  if (userCreated) {
-    console.log(`✓ Admin user created: ${adminEmail} (password: ${adminPassword})`);
-  } else {
-    adminUser.password_hash = hashedPassword;
-    await adminUser.save();
-    console.log(`✓ Admin password updated for ${adminEmail}`);
+  if (!superCreated) {
+    superadmin.password_hash = superHashed;
+    superadmin.role = 'superadmin';
+    await superadmin.save();
   }
+  console.log(`✓ Superadmin user ready: ${superadminEmail}`);
 
-  // 2. Seed System Settings
-  const defaultSettings = [
-    { key: 'VENUE_NAME', value: 'The Playground Sports Arena', description: 'Facility display title' },
-    { key: 'VENUE_DESCRIPTION', value: 'Premier sports courts available for hourly reservations. Features professional tournament acrylic surfaces, climate control, LED lighting, and instant GCash payment verification.', description: 'Facility summary' },
-    { key: 'VENUE_ADDRESS', value: '123 Athletics Way, Fort Bonifacio, Taguig City', description: 'Facility address' },
-    { key: 'VENUE_PHONE', value: '0917-800-3577', description: 'Contact phone' },
-    { key: 'OPEN_TIME', value: '06:00', description: 'Daily opening time (HH:mm)' },
-    { key: 'CLOSE_TIME', value: '22:00', description: 'Daily closing time (HH:mm)' },
-    { key: 'SLOT_DURATION', value: '60', description: 'Booking slot duration in minutes' },
-    { key: 'GCASH_ACCOUNT_NAME', value: 'RY*N KR******R L.', description: 'Merchant account name' },
-    { key: 'GCASH_ACCOUNT_NUMBER', value: '0917-800-3577', description: 'Merchant GCash number' },
-    { key: 'GCASH_QR_IMAGE', value: '', description: 'Uploaded QR image url' },
-    { key: 'FB_NOTIFICATIONS_ENABLED', value: 'false', description: 'Toggle Messenger alerts' },
-    { key: 'EMAIL_NOTIFICATIONS_ENABLED', value: 'true', description: 'Toggle Email alerts' },
-    { key: 'SMTP_HOST', value: 'smtp.gmail.com', description: 'SMTP host' },
-    { key: 'SMTP_PORT', value: '465', description: 'SMTP port' },
-    { key: 'SMTP_FROM_NAME', value: 'The Playground Sports Arena', description: 'Email sender title' }
-  ];
-
-  for (const s of defaultSettings) {
-    const existing = await SystemSetting.findByPk(s.key);
-    if (!existing) {
-      await SystemSetting.create(s);
+  // 2. Create Sample Venue 1: The Playground Pickleball
+  const [venue1] = await Venue.findOrCreate({
+    where: { slug: 'the-playground' },
+    defaults: {
+      name: 'The Playground Pickleball',
+      slug: 'the-playground',
+      description: 'Championship covered arena with tournament-grade pickleball courts, player lounge, and pro shop.',
+      address: '123 Athletics Blvd, Fort Bonifacio, Taguig City',
+      contact_phone: '0917-800-3577',
+      contact_email: 'info@theplayground.com',
+      open_time: '06:00',
+      close_time: '22:00',
+      slot_duration: 60,
+      gcash_account_name: 'THE PLAYGROUND ARENA',
+      gcash_account_number: '0917-800-3577',
+      email_enabled: true,
+      is_active: true
     }
-  }
-  console.log('✓ System settings initialized.');
+  });
 
-  // 3. Seed Sample Courts if empty
-  const courtCount = await Court.count();
-  if (courtCount === 0) {
+  // Create courts for Venue 1 if none exist
+  const v1Courts = await Court.count({ where: { venue_id: venue1.id } });
+  if (v1Courts === 0) {
     await Court.bulkCreate([
       {
-        name: 'Championship Indoor Court 1',
+        venue_id: venue1.id,
+        name: 'Court 1 - Championship Indoor',
         court_number: 1,
-        surface_type: 'Indoor Acrylic (Air-conditioned)',
+        surface_type: 'Indoor Acrylic',
         price_per_hour: 600.00,
-        description: 'Center court with tournament net, shock-absorbing subfloor, climate control, and spectator seating.',
+        description: 'Tournament center court with shock absorption and LED lighting.',
         is_active: true
       },
       {
-        name: 'Championship Indoor Court 2',
+        venue_id: venue1.id,
+        name: 'Court 2 - Championship Indoor',
         court_number: 2,
-        surface_type: 'Indoor Acrylic (Air-conditioned)',
+        surface_type: 'Indoor Acrylic',
         price_per_hour: 600.00,
-        description: 'Pro tournament court featuring high-bay glare-free LED lighting and non-slip surface.',
+        description: 'Tournament court with high-bay LED lighting.',
         is_active: true
       },
       {
-        name: 'Covered Outdoor Court 3',
+        venue_id: venue1.id,
+        name: 'Court 3 - Covered Outdoor',
         court_number: 3,
         surface_type: 'Covered Cushion Acrylic',
         price_per_hour: 450.00,
-        description: 'High-ceiling covered court protected from rain and direct sun, with natural breeze ventilation.',
+        description: 'High-ceiling covered court protected from rain and sun.',
         is_active: true
       }
     ]);
-    console.log('✓ 3 sample facility courts seeded.');
+    console.log('✓ Venue 1 (The Playground) courts seeded.');
   }
 
-  console.log('--- Seed Finished Successfully! ---');
+  // 3. Create Sample Venue 2: Metro Smash Club
+  const [venue2] = await Venue.findOrCreate({
+    where: { slug: 'metro-smash' },
+    defaults: {
+      name: 'Metro Smash Club',
+      slug: 'metro-smash',
+      description: 'Premier multi-sport racket facility featuring professional cushion courts, pro shop, and cafe.',
+      address: '88 Ortigas Complex, Pasig City',
+      contact_phone: '0918-123-4567',
+      contact_email: 'play@metrosmash.com',
+      open_time: '07:00',
+      close_time: '23:00',
+      slot_duration: 60,
+      gcash_account_name: 'METRO SMASH ARENA',
+      gcash_account_number: '0918-123-4567',
+      email_enabled: true,
+      is_active: true
+    }
+  });
+
+  // Create courts for Venue 2 if none exist
+  const v2Courts = await Court.count({ where: { venue_id: venue2.id } });
+  if (v2Courts === 0) {
+    await Court.bulkCreate([
+      {
+        venue_id: venue2.id,
+        name: 'Smash Arena A',
+        court_number: 1,
+        surface_type: 'Hardcourt Vinyl Cushion',
+        price_per_hour: 500.00,
+        description: 'Premium air-conditioned court.',
+        is_active: true
+      },
+      {
+        venue_id: venue2.id,
+        name: 'Smash Arena B',
+        court_number: 2,
+        surface_type: 'Hardcourt Vinyl Cushion',
+        price_per_hour: 500.00,
+        description: 'Premium air-conditioned court.',
+        is_active: true
+      }
+    ]);
+    console.log('✓ Venue 2 (Metro Smash) courts seeded.');
+  }
+
+  console.log('--- Multi-Tenant Seed Finished Successfully! ---');
 }
 
 if (require.main === module) {
   seed()
     .then(() => process.exit(0))
     .catch(err => {
-      console.error('Seed failed:', err);
+      console.error('Seed error:', err);
       process.exit(1);
     });
 }

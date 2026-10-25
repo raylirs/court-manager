@@ -8,6 +8,14 @@ const User = sequelize.define('User', {
     primaryKey: true,
     autoIncrement: true
   },
+  venue_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true, // null for platform superadmin, integer for facility venue_admin
+    references: {
+      model: 'venues',
+      key: 'id'
+    }
+  },
   name: {
     type: DataTypes.STRING(100),
     allowNull: false
@@ -25,8 +33,8 @@ const User = sequelize.define('User', {
     allowNull: false
   },
   role: {
-    type: DataTypes.ENUM('admin', 'staff'),
-    defaultValue: 'admin'
+    type: DataTypes.STRING(50),
+    defaultValue: 'venue_admin' // 'superadmin' or 'venue_admin'
   },
   is_active: {
     type: DataTypes.BOOLEAN,

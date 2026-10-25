@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const { Court, Reservation, CourtBlock, SystemSetting, User } = require('../models');
+const { Venue, Court, Reservation, CourtBlock, User } = require('../models');
 const { requireAuth, redirectIfAuth } = require('../middleware/auth');
 const upload = require('../config/upload');
 const { formatCurrency, formatTime12, formatDateDisplay } = require('../utils/dateTimeUtils');
@@ -9,27 +9,31 @@ const emailService = require('../services/emailService');
 const facebookService = require('../services/facebookService');
 const { Op } = require('sequelize');
 
-// Helper to get settings map
-async function getSettingsMap() {
-  const rows = await SystemSetting.findAll();
-  const map = {};
-  rows.forEach(r => { map[r.key] = r.value; });
-  return map;
-}
+// Helper to determine active venue for current user
+async function resolveCurrentVenue(req) {
+  if (!req.session || !req.session.user) return null;
+  const user = req.session.user;
 
-// Helper to save multiple settings
-async function saveSettings(obj) {
-  for (const [key, value] of Object.entries(obj)) {
-    if (value !== undefined) {
-      await SystemSetting.upsert({
-        key,
-        value: typeof value === 'string' ? value.trim() : String(value)
-      });
+  // If superadmin, allow switching venue via session or query, or default to first venue
+  if (user.role === 'superadmin') {
+    if (req.query.switch_venue_id) {
+      req.session.activeVenueId = parseInt(req.query.switch_venue_id, 10);
     }
+    const venueId = req.session.activeVenueId || (await Venue.findOne({ order: [['id', 'ASC']] }))?.id;
+    if (venueId) {
+      return await Venue.findByPk(venueId);
+    }
+    return null;
   }
+
+  // If venue admin, strictly return their assigned venue
+  if (user.venue_id) {
+    return await Venue.findByPk(user.venue_id);
+  }
+  return null;
 }
 
-// Middleware to inject common admin locals
+// Middleware to inject admin locals
 router.use(async (req, res, next) => {
   res.locals.currentPath = req.path;
   res.locals.currentUser = req.session ? req.session.user : null;
@@ -38,12 +42,14 @@ router.use(async (req, res, next) => {
   res.locals.formatDateDisplay = formatDateDisplay;
 
   try {
-    const settings = await getSettingsMap();
-    res.locals.venueName = settings.VENUE_NAME || 'Court Manager';
-    res.locals.settings = settings;
+    const venue = await resolveCurrentVenue(req);
+    res.locals.currentVenue = venue;
+    res.locals.venueName = venue ? venue.name : 'Court Manager Platform';
+    res.locals.allVenues = (req.session?.user?.role === 'superadmin') ? await Venue.findAll({ order: [['name', 'ASC']] }) : [];
   } catch (e) {
-    res.locals.venueName = 'Court Manager';
-    res.locals.settings = {};
+    res.locals.currentVenue = null;
+    res.locals.venueName = 'Court Manager Platform';
+    res.locals.allVenues = [];
   }
   next();
 });
@@ -51,13 +57,16 @@ router.use(async (req, res, next) => {
 // ===================== AUTHENTICATION =====================
 
 router.get('/login', redirectIfAuth, (req, res) => {
-  res.render('admin/login', { layout: false, title: 'Admin Login' });
+  res.render('admin/login', { layout: false, title: 'Staff Login' });
 });
 
 router.post('/login', redirectIfAuth, async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ where: { email: email.trim().toLowerCase(), is_active: true } });
+    const user = await User.findOne({
+      where: { email: email.trim().toLowerCase(), is_active: true },
+      include: [{ model: Venue, as: 'venue' }]
+    });
 
     if (!user || !(await user.validPassword(password))) {
       req.flash('error', 'Invalid email or password.');
@@ -68,7 +77,8 @@ router.post('/login', redirectIfAuth, async (req, res) => {
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role
+      role: user.role,
+      venue_id: user.venue_id
     };
 
     req.flash('success', `Welcome back, ${user.name}!`);
@@ -86,30 +96,105 @@ router.get('/logout', (req, res) => {
   });
 });
 
-// All following routes require authentication
+// Protected routes
 router.use(requireAuth);
+
+// ===================== SUPERADMIN VENUES MANAGEMENT =====================
+
+router.get('/venues', async (req, res) => {
+  if (req.session.user.role !== 'superadmin') {
+    return res.redirect('/admin');
+  }
+
+  const venues = await Venue.findAll({
+    include: [
+      { model: Court, as: 'courts' },
+      { model: Reservation, as: 'reservations' },
+      { model: User, as: 'managers' }
+    ],
+    order: [['created_at', 'DESC']]
+  });
+
+  res.render('admin/superadmin-venues', { pageTitle: 'Platform Venues & Clients', venues });
+});
+
+router.post('/venues', upload.single('logo'), async (req, res) => {
+  if (req.session.user.role !== 'superadmin') {
+    return res.redirect('/admin');
+  }
+
+  try {
+    const { name, slug, address, contact_phone, contact_email, admin_name, admin_email, admin_password } = req.body;
+    const cleanSlug = slug ? slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-') : name.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    const logoUrl = req.file ? `/uploads/${req.file.filename}` : null;
+
+    // Create Venue
+    const venue = await Venue.create({
+      name: name.trim(),
+      slug: cleanSlug,
+      address: address ? address.trim() : null,
+      contact_phone: contact_phone ? contact_phone.trim() : null,
+      contact_email: contact_email ? contact_email.trim() : null,
+      logo_url: logoUrl,
+      is_active: true
+    });
+
+    // Create Venue Admin User
+    if (admin_email && admin_password) {
+      const hashedPassword = await bcrypt.hash(admin_password, 10);
+      await User.create({
+        venue_id: venue.id,
+        name: admin_name ? admin_name.trim() : `${venue.name} Admin`,
+        email: admin_email.trim().toLowerCase(),
+        password_hash: hashedPassword,
+        role: 'venue_admin',
+        is_active: true
+      });
+    }
+
+    req.flash('success', `Venue "${venue.name}" created successfully! Public link: /v/${venue.slug}`);
+    res.redirect('/admin/venues');
+  } catch (err) {
+    req.flash('error', 'Failed to create venue: ' + err.message);
+    res.redirect('/admin/venues');
+  }
+});
 
 // ===================== DASHBOARD =====================
 
 router.get('/', async (req, res) => {
   try {
-    const totalBookings = await Reservation.count();
-    const confirmedCount = await Reservation.count({ where: { payment_status: 'confirmed' } });
-    const pendingCount = await Reservation.count({ where: { payment_status: 'pending_payment' } });
-    const activeCourts = await Court.count({ where: { is_active: true } });
+    const venue = res.locals.currentVenue;
+    const isSuper = req.session.user.role === 'superadmin';
+
+    const where = {};
+    if (!isSuper && venue) {
+      where.venue_id = venue.id;
+    } else if (isSuper && req.session.activeVenueId) {
+      where.venue_id = req.session.activeVenueId;
+    }
+
+    const totalBookings = await Reservation.count({ where });
+    const confirmedCount = await Reservation.count({ where: { ...where, payment_status: 'confirmed' } });
+    const pendingCount = await Reservation.count({ where: { ...where, payment_status: 'pending_payment' } });
+    const activeCourts = await Court.count({ where: { ...where, is_active: true } });
 
     const totalRevenueSum = await Reservation.sum('total_price', {
-      where: { payment_status: { [Op.in]: ['confirmed', 'pending_payment'] } }
+      where: { ...where, payment_status: { [Op.in]: ['confirmed', 'pending_payment'] } }
     });
 
     const recentBookings = await Reservation.findAll({
+      where,
       limit: 8,
       order: [['created_at', 'DESC']],
-      include: [{ model: Court, as: 'court' }]
+      include: [
+        { model: Court, as: 'court' },
+        { model: Venue, as: 'venue' }
+      ]
     });
 
     res.render('admin/dashboard', {
-      pageTitle: 'Operations Dashboard',
+      pageTitle: venue ? `${venue.name} Dashboard` : 'Platform Operations Dashboard',
       stats: {
         totalBookings,
         confirmedBookings: confirmedCount,
@@ -129,7 +214,9 @@ router.get('/', async (req, res) => {
 
 router.get('/courts', async (req, res) => {
   try {
-    const courts = await Court.findAll({ order: [['court_number', 'ASC'], ['id', 'ASC']] });
+    const venue = res.locals.currentVenue;
+    const where = venue ? { venue_id: venue.id } : {};
+    const courts = await Court.findAll({ where, order: [['court_number', 'ASC'], ['id', 'ASC']] });
     res.render('admin/courts', { pageTitle: 'Courts & Pricing', courts });
   } catch (err) {
     res.status(500).send('Error loading courts');
@@ -142,10 +229,17 @@ router.get('/courts/new', (req, res) => {
 
 router.post('/courts', upload.single('image'), async (req, res) => {
   try {
+    const venue = res.locals.currentVenue;
+    if (!venue) {
+      req.flash('error', 'Please select or create a venue first.');
+      return res.redirect('/admin/courts');
+    }
+
     const { name, court_number, surface_type, price_per_hour, description, is_active } = req.body;
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
     await Court.create({
+      venue_id: venue.id,
       name: name.trim(),
       court_number: parseInt(court_number, 10) || 1,
       surface_type: surface_type ? surface_type.trim() : 'Indoor Acrylic',
@@ -155,10 +249,9 @@ router.post('/courts', upload.single('image'), async (req, res) => {
       is_active: is_active === 'true'
     });
 
-    req.flash('success', `Court "${name}" created successfully.`);
+    req.flash('success', `Court "${name}" added to ${venue.name}.`);
     res.redirect('/admin/courts');
   } catch (err) {
-    console.error('Error creating court:', err);
     req.flash('error', 'Failed to create court: ' + err.message);
     res.redirect('/admin/courts/new');
   }
@@ -180,13 +273,9 @@ router.get('/courts/:id/edit', async (req, res) => {
 router.post('/courts/:id/update', upload.single('image'), async (req, res) => {
   try {
     const court = await Court.findByPk(req.params.id);
-    if (!court) {
-      req.flash('error', 'Court not found.');
-      return res.redirect('/admin/courts');
-    }
+    if (!court) return res.redirect('/admin/courts');
 
     const { name, court_number, surface_type, price_per_hour, description, is_active } = req.body;
-
     court.name = name.trim();
     court.court_number = parseInt(court_number, 10) || court.court_number;
     court.surface_type = surface_type ? surface_type.trim() : court.surface_type;
@@ -213,7 +302,7 @@ router.post('/courts/:id/toggle', async (req, res) => {
     if (court) {
       court.is_active = !court.is_active;
       await court.save();
-      req.flash('success', `Court "${court.name}" is now ${court.is_active ? 'Active' : 'Paused'}.`);
+      req.flash('success', `Court "${court.name}" status updated.`);
     }
     res.redirect('/admin/courts');
   } catch (err) {
@@ -230,7 +319,7 @@ router.post('/courts/:id/delete', async (req, res) => {
     }
     res.redirect('/admin/courts');
   } catch (err) {
-    req.flash('error', 'Cannot delete court with existing reservations.');
+    req.flash('error', 'Cannot delete court with active reservations.');
     res.redirect('/admin/courts');
   }
 });
@@ -239,11 +328,13 @@ router.post('/courts/:id/delete', async (req, res) => {
 
 router.get('/reservations', async (req, res) => {
   try {
+    const venue = res.locals.currentVenue;
     const query = req.query.q ? req.query.q.trim() : '';
     const statusFilter = req.query.status || '';
     const dateFilter = req.query.date || '';
 
     const where = {};
+    if (venue) where.venue_id = venue.id;
 
     if (query) {
       where[Op.or] = [
@@ -255,22 +346,20 @@ router.get('/reservations', async (req, res) => {
       ];
     }
 
-    if (statusFilter) {
-      where.payment_status = statusFilter;
-    }
-
-    if (dateFilter) {
-      where.booking_date = dateFilter;
-    }
+    if (statusFilter) where.payment_status = statusFilter;
+    if (dateFilter) where.booking_date = dateFilter;
 
     const reservations = await Reservation.findAll({
       where,
-      include: [{ model: Court, as: 'court' }],
+      include: [
+        { model: Court, as: 'court' },
+        { model: Venue, as: 'venue' }
+      ],
       order: [['created_at', 'DESC']]
     });
 
-    const pendingCount = await Reservation.count({ where: { payment_status: 'pending_payment' } });
-    const confirmedCount = await Reservation.count({ where: { payment_status: 'confirmed' } });
+    const pendingCount = await Reservation.count({ where: { ...where, payment_status: 'pending_payment' } });
+    const confirmedCount = await Reservation.count({ where: { ...where, payment_status: 'confirmed' } });
 
     res.render('admin/reservations', {
       pageTitle: 'Reservation Management',
@@ -282,7 +371,6 @@ router.get('/reservations', async (req, res) => {
       confirmedCount
     });
   } catch (err) {
-    console.error('Error fetching reservations:', err);
     res.status(500).send('Error loading reservations');
   }
 });
@@ -291,24 +379,24 @@ router.post('/reservations/:id/status', async (req, res) => {
   try {
     const { status } = req.body;
     const reservation = await Reservation.findByPk(req.params.id, {
-      include: [{ model: Court, as: 'court' }]
+      include: [
+        { model: Court, as: 'court' },
+        { model: Venue, as: 'venue' }
+      ]
     });
 
     if (reservation) {
       reservation.payment_status = status;
       await reservation.save();
 
-      // If confirming, send email receipt
       if (status === 'confirmed') {
-        emailService.sendBookingConfirmation(reservation, reservation.court).catch(console.error);
+        emailService.sendBookingConfirmation(reservation, reservation.court, reservation.venue).catch(console.error);
       }
-
       req.flash('success', `Reservation ${reservation.reference_code} status updated to ${status}.`);
     }
 
     res.redirect('/admin/reservations');
   } catch (err) {
-    req.flash('error', 'Failed to update reservation status.');
     res.redirect('/admin/reservations');
   }
 });
@@ -317,8 +405,11 @@ router.post('/reservations/:id/status', async (req, res) => {
 
 router.get('/blocks', async (req, res) => {
   try {
-    const courts = await Court.findAll({ where: { is_active: true } });
+    const venue = res.locals.currentVenue;
+    const where = venue ? { venue_id: venue.id } : {};
+    const courts = await Court.findAll({ where: { ...where, is_active: true } });
     const blocks = await CourtBlock.findAll({
+      where,
       include: [{ model: Court, as: 'court' }],
       order: [['block_date', 'ASC'], ['start_time', 'ASC']]
     });
@@ -336,9 +427,12 @@ router.get('/blocks', async (req, res) => {
 
 router.post('/blocks', async (req, res) => {
   try {
-    const { court_id, block_date, start_time, end_time, reason } = req.body;
+    const venue = res.locals.currentVenue;
+    if (!venue) return res.redirect('/admin/blocks');
 
+    const { court_id, block_date, start_time, end_time, reason } = req.body;
     await CourtBlock.create({
+      venue_id: venue.id,
       court_id: court_id ? parseInt(court_id, 10) : null,
       block_date,
       start_time,
@@ -359,7 +453,7 @@ router.post('/blocks/:id/delete', async (req, res) => {
     const block = await CourtBlock.findByPk(req.params.id);
     if (block) {
       await block.destroy();
-      req.flash('success', 'Time block removed. Slot is now reopened.');
+      req.flash('success', 'Time block removed.');
     }
     res.redirect('/admin/blocks');
   } catch (err) {
@@ -367,7 +461,7 @@ router.post('/blocks/:id/delete', async (req, res) => {
   }
 });
 
-// ===================== FACILITY & HOURS SETTINGS =====================
+// ===================== VENUE PROFILE & HOURS =====================
 
 router.get('/venue-settings', (req, res) => {
   res.render('admin/venue-settings', { pageTitle: 'Facility & Hours' });
@@ -375,18 +469,21 @@ router.get('/venue-settings', (req, res) => {
 
 router.post('/venue-settings', async (req, res) => {
   try {
-    const { VENUE_NAME, VENUE_DESCRIPTION, VENUE_ADDRESS, VENUE_PHONE, OPEN_TIME, CLOSE_TIME, SLOT_DURATION } = req.body;
-    await saveSettings({
-      VENUE_NAME,
-      VENUE_DESCRIPTION,
-      VENUE_ADDRESS,
-      VENUE_PHONE,
-      OPEN_TIME,
-      CLOSE_TIME,
-      SLOT_DURATION
-    });
+    const venue = res.locals.currentVenue;
+    if (!venue) return res.redirect('/admin');
 
-    req.flash('success', 'Facility profile & operating hours updated successfully.');
+    const { name, description, address, contact_phone, contact_email, open_time, close_time, slot_duration } = req.body;
+    venue.name = name.trim();
+    venue.description = description ? description.trim() : null;
+    venue.address = address ? address.trim() : null;
+    venue.contact_phone = contact_phone ? contact_phone.trim() : null;
+    venue.contact_email = contact_email ? contact_email.trim() : null;
+    venue.open_time = open_time || '06:00';
+    venue.close_time = close_time || '22:00';
+    venue.slot_duration = parseInt(slot_duration, 10) || 60;
+
+    await venue.save();
+    req.flash('success', 'Facility profile & operating hours updated.');
     res.redirect('/admin/venue-settings');
   } catch (err) {
     req.flash('error', 'Failed to save settings: ' + err.message);
@@ -402,17 +499,18 @@ router.get('/gcash', (req, res) => {
 
 router.post('/gcash', upload.single('qr_image'), async (req, res) => {
   try {
-    const { GCASH_ACCOUNT_NAME, GCASH_ACCOUNT_NUMBER } = req.body;
-    const updates = {
-      GCASH_ACCOUNT_NAME,
-      GCASH_ACCOUNT_NUMBER
-    };
+    const venue = res.locals.currentVenue;
+    if (!venue) return res.redirect('/admin');
+
+    const { gcash_account_name, gcash_account_number } = req.body;
+    venue.gcash_account_name = gcash_account_name ? gcash_account_name.trim() : null;
+    venue.gcash_account_number = gcash_account_number ? gcash_account_number.trim() : null;
 
     if (req.file) {
-      updates.GCASH_QR_IMAGE = `/uploads/${req.file.filename}`;
+      venue.gcash_qr_image = `/uploads/${req.file.filename}`;
     }
 
-    await saveSettings(updates);
+    await venue.save();
     req.flash('success', 'GCash merchant details and QR code updated.');
     res.redirect('/admin/gcash');
   } catch (err) {
@@ -421,7 +519,7 @@ router.post('/gcash', upload.single('qr_image'), async (req, res) => {
   }
 });
 
-// ===================== MESSENGER SETTINGS & TEST =====================
+// ===================== MESSENGER SETTINGS =====================
 
 router.get('/messenger', (req, res) => {
   res.render('admin/messenger', { pageTitle: 'Meta Messenger Hub' });
@@ -429,18 +527,20 @@ router.get('/messenger', (req, res) => {
 
 router.post('/messenger', async (req, res) => {
   try {
-    const { FB_NOTIFICATIONS_ENABLED, FB_APP_ID, FB_APP_SECRET, FB_PAGE_ID, FB_PAGE_NAME, FB_PAGE_TOKEN, FB_ADMIN_PSIDS } = req.body;
-    await saveSettings({
-      FB_NOTIFICATIONS_ENABLED: FB_NOTIFICATIONS_ENABLED === 'true' ? 'true' : 'false',
-      FB_APP_ID,
-      FB_APP_SECRET,
-      FB_PAGE_ID,
-      FB_PAGE_NAME,
-      FB_PAGE_TOKEN,
-      FB_ADMIN_PSIDS
-    });
+    const venue = res.locals.currentVenue;
+    if (!venue) return res.redirect('/admin');
 
-    req.flash('success', 'Facebook Messenger integration settings saved.');
+    const { fb_enabled, fb_app_id, fb_app_secret, fb_page_id, fb_page_name, fb_page_token, fb_admin_psids } = req.body;
+    venue.fb_enabled = fb_enabled === 'true';
+    venue.fb_app_id = fb_app_id ? fb_app_id.trim() : null;
+    venue.fb_app_secret = fb_app_secret ? fb_app_secret.trim() : null;
+    venue.fb_page_id = fb_page_id ? fb_page_id.trim() : null;
+    venue.fb_page_name = fb_page_name ? fb_page_name.trim() : null;
+    venue.fb_page_token = fb_page_token ? fb_page_token.trim() : null;
+    venue.fb_admin_psids = fb_admin_psids ? fb_admin_psids.trim() : null;
+
+    await venue.save();
+    req.flash('success', 'Facebook Messenger integration settings saved for ' + venue.name);
     res.redirect('/admin/messenger');
   } catch (err) {
     req.flash('error', 'Failed to save Messenger settings: ' + err.message);
@@ -450,8 +550,9 @@ router.post('/messenger', async (req, res) => {
 
 router.post('/messenger/test', async (req, res) => {
   try {
+    const venue = res.locals.currentVenue;
     const { test_psid } = req.body;
-    await facebookService.sendTestMessenger(test_psid);
+    await facebookService.sendTestMessenger(test_psid, venue);
     req.flash('success', `Test notification successfully delivered to PSID: ${test_psid}!`);
   } catch (err) {
     req.flash('error', `Meta Messenger Test Failed: ${err.message}`);
@@ -459,7 +560,7 @@ router.post('/messenger/test', async (req, res) => {
   res.redirect('/admin/messenger');
 });
 
-// ===================== EMAIL SETTINGS & TEST =====================
+// ===================== EMAIL SETTINGS =====================
 
 router.get('/email', (req, res) => {
   res.render('admin/email', { pageTitle: 'Email & SMTP Hub' });
@@ -467,18 +568,20 @@ router.get('/email', (req, res) => {
 
 router.post('/email', async (req, res) => {
   try {
-    const { EMAIL_NOTIFICATIONS_ENABLED, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM_NAME, ADMIN_ALERT_EMAIL } = req.body;
-    await saveSettings({
-      EMAIL_NOTIFICATIONS_ENABLED: EMAIL_NOTIFICATIONS_ENABLED === 'true' ? 'true' : 'false',
-      SMTP_HOST,
-      SMTP_PORT,
-      SMTP_USER,
-      SMTP_PASS,
-      SMTP_FROM_NAME,
-      ADMIN_ALERT_EMAIL
-    });
+    const venue = res.locals.currentVenue;
+    if (!venue) return res.redirect('/admin');
 
-    req.flash('success', 'Email & SMTP settings saved.');
+    const { email_enabled, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_from_name, admin_alert_email } = req.body;
+    venue.email_enabled = email_enabled === 'true';
+    venue.smtp_host = smtp_host ? smtp_host.trim() : null;
+    venue.smtp_port = parseInt(smtp_port, 10) || 465;
+    venue.smtp_user = smtp_user ? smtp_user.trim() : null;
+    venue.smtp_pass = smtp_pass ? smtp_pass.trim() : null;
+    venue.smtp_from_name = smtp_from_name ? smtp_from_name.trim() : null;
+    venue.admin_alert_email = admin_alert_email ? admin_alert_email.trim() : null;
+
+    await venue.save();
+    req.flash('success', 'Email & SMTP settings saved for ' + venue.name);
     res.redirect('/admin/email');
   } catch (err) {
     req.flash('error', 'Failed to save email settings: ' + err.message);
@@ -488,8 +591,9 @@ router.post('/email', async (req, res) => {
 
 router.post('/email/test', async (req, res) => {
   try {
+    const venue = res.locals.currentVenue;
     const { test_email } = req.body;
-    await emailService.sendTestEmail(test_email);
+    await emailService.sendTestEmail(test_email, venue);
     req.flash('success', `Test email successfully sent to ${test_email}! Check your inbox.`);
   } catch (err) {
     req.flash('error', `SMTP Connection Test Failed: ${err.message}`);

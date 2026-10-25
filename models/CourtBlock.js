@@ -7,9 +7,17 @@ const CourtBlock = sequelize.define('CourtBlock', {
     primaryKey: true,
     autoIncrement: true
   },
+  venue_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'venues',
+      key: 'id'
+    }
+  },
   court_id: {
     type: DataTypes.INTEGER,
-    allowNull: true, // null means all courts
+    allowNull: true, // null means all courts in this venue
     references: {
       model: 'courts',
       key: 'id'
@@ -20,11 +28,11 @@ const CourtBlock = sequelize.define('CourtBlock', {
     allowNull: false
   },
   start_time: {
-    type: DataTypes.STRING(10), // e.g. "08:00"
+    type: DataTypes.STRING(10),
     allowNull: false
   },
   end_time: {
-    type: DataTypes.STRING(10), // e.g. "12:00"
+    type: DataTypes.STRING(10),
     allowNull: false
   },
   reason: {

@@ -2,7 +2,7 @@
 
   <div class="pb-4 border-b border-slate-200">
     <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">Email & SMTP Notification Hub</h2>
-    <p class="text-xs text-slate-500">Configure email delivery for automated player booking receipts, reservation status updates, and manager alerts.</p>
+    <p class="text-xs text-slate-500">Configure email delivery for booking receipts and alerts for <strong><%= currentVenue ? currentVenue.name : 'this venue' %></strong>.</p>
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -17,7 +17,7 @@
             <span class="text-[11px] text-brand-700 block">Send booking receipts to customers upon reservation</span>
           </div>
           <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" name="EMAIL_NOTIFICATIONS_ENABLED" value="true" <%= settings.EMAIL_NOTIFICATIONS_ENABLED !== 'false' ? 'checked' : '' %> class="sr-only peer">
+            <input type="checkbox" name="email_enabled" value="true" <%= (currentVenue && currentVenue.email_enabled) ? 'checked' : '' %> class="sr-only peer">
             <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-800"></div>
           </label>
         </div>
@@ -25,33 +25,33 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div class="sm:col-span-2">
             <label class="form-label">SMTP Host</label>
-            <input type="text" name="SMTP_HOST" value="<%= settings.SMTP_HOST || 'smtp.gmail.com' %>" placeholder="smtp.gmail.com" class="form-input text-xs font-mono-code">
+            <input type="text" name="smtp_host" value="<%= currentVenue ? currentVenue.smtp_host || 'smtp.gmail.com' : 'smtp.gmail.com' %>" placeholder="smtp.gmail.com" class="form-input text-xs font-mono-code">
           </div>
           <div>
             <label class="form-label">SMTP Port</label>
-            <input type="number" name="SMTP_PORT" value="<%= settings.SMTP_PORT || '465' %>" placeholder="465" class="form-input text-xs font-mono-code">
+            <input type="number" name="smtp_port" value="<%= currentVenue ? currentVenue.smtp_port || 465 : 465 %>" placeholder="465" class="form-input text-xs font-mono-code">
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="form-label">SMTP Username / Email</label>
-            <input type="email" name="SMTP_USER" value="<%= settings.SMTP_USER || '' %>" placeholder="facility@gmail.com" class="form-input text-xs">
+            <input type="email" name="smtp_user" value="<%= currentVenue ? currentVenue.smtp_user || '' : '' %>" placeholder="facility@gmail.com" class="form-input text-xs">
           </div>
           <div>
             <label class="form-label">SMTP Password / App Password</label>
-            <input type="password" name="SMTP_PASS" value="<%= settings.SMTP_PASS || '' %>" placeholder="••••••••••••••••" class="form-input text-xs font-mono-code">
+            <input type="password" name="smtp_pass" value="<%= currentVenue ? currentVenue.smtp_pass || '' : '' %>" placeholder="••••••••••••••••" class="form-input text-xs font-mono-code">
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="form-label">Sender Display Name</label>
-            <input type="text" name="SMTP_FROM_NAME" value="<%= settings.SMTP_FROM_NAME || '' %>" placeholder="e.g. The Playground Pickleball" class="form-input text-xs">
+            <input type="text" name="smtp_from_name" value="<%= currentVenue ? currentVenue.smtp_from_name || currentVenue.name : '' %>" placeholder="e.g. The Playground Pickleball" class="form-input text-xs">
           </div>
           <div>
             <label class="form-label">Admin Alert Recipient Email</label>
-            <input type="email" name="ADMIN_ALERT_EMAIL" value="<%= settings.ADMIN_ALERT_EMAIL || '' %>" placeholder="manager@gmail.com" class="form-input text-xs">
+            <input type="email" name="admin_alert_email" value="<%= currentVenue ? currentVenue.admin_alert_email || '' : '' %>" placeholder="manager@gmail.com" class="form-input text-xs">
           </div>
         </div>
 
@@ -68,13 +68,13 @@
     <div class="lg:col-span-5 glass-card p-6 space-y-4">
       <div class="pb-2 border-b border-slate-100">
         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Live Delivery Test</h3>
-        <p class="text-[11px] text-slate-500 mt-0.5">Send a test email to verify SMTP handshake and inbox delivery.</p>
+        <p class="text-[11px] text-slate-500 mt-0.5">Send a test email to verify SMTP handshake for this venue.</p>
       </div>
 
       <form action="/admin/email/test" method="POST" class="space-y-3">
         <div>
           <label class="form-label">Send Test Email To:</label>
-          <input type="email" name="test_email" required placeholder="your.personal@email.com" value="<%= settings.ADMIN_ALERT_EMAIL || settings.SMTP_USER || '' %>" class="form-input text-xs">
+          <input type="email" name="test_email" required placeholder="your.email@gmail.com" value="<%= (currentVenue && currentVenue.admin_alert_email) ? currentVenue.admin_alert_email : '' %>" class="form-input text-xs">
         </div>
 
         <button type="submit" class="btn-secondary-white w-full py-2.5 text-xs font-bold">
@@ -82,14 +82,6 @@
           <span>Send Verification Email</span>
         </button>
       </form>
-
-      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-600 space-y-1.5">
-        <span class="font-bold text-slate-800 block flex items-center gap-1">
-          <i data-lucide="info" class="w-3.5 h-3.5 text-brand-700"></i>
-          Gmail Setup Note:
-        </span>
-        <p>If using Gmail, generate a 16-character <strong>App Password</strong> under your Google Account Security settings (2FA must be enabled) rather than your personal account password.</p>
-      </div>
     </div>
 
   </div>
